@@ -81,19 +81,28 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
 
 ## Usage
 
-1. Build the workspace:
+1. Source your ROS 2 Humble environment (skip if your shell already sources it):
+   ```bash
+   source /opt/ros/humble/setup.bash
+   ```
+2. Install the Python dependencies (only required once, normally handled by
+   `rosdep`; included here for clarity when running inside a fresh workspace):
+   ```bash
+   pip install --user neo4j
+   ```
+3. Build the workspace:
    ```bash
    colcon build --symlink-install
    source install/setup.bash
    ```
-2. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
+4. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
    so that it contains one entry per panel with the following keys only:
    - `ifc_guid`: unique identifier of the panel.
    - `panel_position`: `[x, y, z]` pick location of the panel.
    - `target_position`: `[x, y, z]` placement location of the panel.
    - `next`: the IFC GUID of the next panel in the chain, or empty/`null` for the
      final element.
-3. Launch the YAML-based executor:
+5. Launch the YAML-based executor:
    ```bash
    ros2 run crane_builder panel_chain_executor \
      --ros-args -p panel_chain_file:=/absolute/path/to/your_panels.yaml
@@ -106,7 +115,8 @@ additional parameters or orientation handling.
 ### Neo4j-driven execution
 
 To source the panel information directly from Neo4j instead of a YAML file,
-launch the Neo4j executor. The node expects every panel node (label defaults to
+launch the Neo4j executor (after completing steps 1–3 above). The node expects
+every panel node (label defaults to
 `Panel`) to provide:
 
 - `ifcGuid`: unique identifier of the panel.
