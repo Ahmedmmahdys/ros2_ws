@@ -75,8 +75,7 @@ class Neo4jPanelChainExecutor(Node):
 
         if not requested_level:
             self.get_logger().info(
-                "No level_name parameter supplied; defaulting to level '%s' discovered in Neo4j.",
-                level_name,
+                f"No level_name parameter supplied; defaulting to level '{level_name}' discovered in Neo4j."
             )
 
         try:
@@ -97,12 +96,10 @@ class Neo4jPanelChainExecutor(Node):
         self._publisher = self.create_publisher(PanelTask, "panel_task", 10)
         self._timer = self.create_timer(period, self._publish_next)
 
+        ordered_ifc_guids = ", ".join(self._sequence_order)
         self.get_logger().info(
-            "Loaded %d panels from Neo4j for level '%s' (%s mode). Publishing to 'panel_task' with identity orientation. Order: %s",
-            len(self._sequence_order),
-            self._level_name,
-            self._mode,
-            ", ".join(self._sequence_order),
+            "Loaded %d panels from Neo4j for level '%s' (%s mode). Publishing to 'panel_task' with identity orientation. Order: %s"
+            % (len(self._sequence_order), self._level_name, self._mode, ordered_ifc_guids)
         )
 
     def _select_default_level(self, mode: str, database: Optional[str]) -> str:
@@ -273,18 +270,19 @@ class Neo4jPanelChainExecutor(Node):
         center = self._panel_centers.get(link.ifc_guid)
         if center:
             self.get_logger().info(
-                "Dispatched panel %s (center: %.3f, %.3f, %.3f) -> next %s",
-                link.ifc_guid,
-                center.x,
-                center.y,
-                center.z,
-                link.next_ifc_guid or "<end>",
+                "Dispatched panel %s (center: %.3f, %.3f, %.3f) -> next %s"
+                % (
+                    link.ifc_guid,
+                    center.x,
+                    center.y,
+                    center.z,
+                    link.next_ifc_guid or "<end>",
+                )
             )
         else:
             self.get_logger().info(
-                "Dispatched panel %s -> next %s",
-                link.ifc_guid,
-                link.next_ifc_guid or "<end>",
+                "Dispatched panel %s -> next %s"
+                % (link.ifc_guid, link.next_ifc_guid or "<end>")
             )
 
         self._next_index += 1
