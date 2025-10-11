@@ -32,11 +32,9 @@ class Neo4jPanelChainExecutor(Node):
         password = self.get_parameter("password").get_parameter_value().string_value
         database = self.get_parameter("database").get_parameter_value().string_value or None
 
-        level_name = (
+        requested_level = (
             self.get_parameter("level_name").get_parameter_value().string_value.strip()
         )
-        if not level_name:
-            raise ValueError("level_name parameter must be provided and non-empty.")
 
         mode_param = self.get_parameter("mode").get_parameter_value().string_value.strip()
         if not mode_param:
@@ -63,6 +61,25 @@ class Neo4jPanelChainExecutor(Node):
             raise
 
         try:
+            level_name = requested_level or self._select_default_level(mode, database)
+        except Exception as exc:  # noqa: BLE001 - propagate discovery issues clearly
+            self.get_logger().error(f"Failed to determine a level to query: {exc}")
+            self._driver.close()
+            raise
+
+        if not level_name:
+            self._driver.close()
+            raise ValueError(
+                "Neo4j did not return any levels containing panels for the requested mode."
+            )
+
+        if not requested_level:
+            self.get_logger().info(
+                "No level_name parameter supplied; defaulting to level '%s' discovered in Neo4j.",
+                level_name,
+            )
+
+        try:
             (
                 self._panels,
                 self._sequence_order,
@@ -87,6 +104,42 @@ class Neo4jPanelChainExecutor(Node):
             self._mode,
             ", ".join(self._sequence_order),
         )
+
+    def _select_default_level(self, mode: str, database: Optional[str]) -> str:
+        """Return the first level that contains panels for the requested mode."""
+
+        if mode == "wall":
+            query = """
+            MATCH (lvl:Level)-[:HAS_WALL]->(:Wall)-[:HAS_PART]->(:WallPart)
+            MATCH (:FormworkPanel)-[:HOSTED_BY]->(:WallPart)
+            RETURN DISTINCT lvl.name AS level_name
+            ORDER BY level_name
+            LIMIT 1
+            """
+        else:
+            query = """
+            MATCH (lvl:Level)-[:HAS_COLUMN]->(:Column)
+            MATCH (:FormworkPanel)-[:HOSTED_BY]->(:Column)
+            RETURN DISTINCT lvl.name AS level_name
+            ORDER BY level_name
+            LIMIT 1
+            """
+
+        with self._driver.session(database=database) as session:
+            record = session.run(query).single()
+
+        if not record:
+            raise ValueError(
+                "Neo4j contains no levels with FormworkPanel nodes linked via the required relationships."
+            )
+
+        level_name = (record.get("level_name") or "").strip()
+        if not level_name:
+            raise ValueError(
+                "Neo4j returned a level without a name while selecting a default level."
+            )
+
+        return level_name
 
     def _load_panel_chain(
         self, level_name: str, mode: str, database: Optional[str]

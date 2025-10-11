@@ -134,10 +134,12 @@ relationships created by the IFC importer:
   `(:FormworkPanel)-[:HOSTED_BY]->(:Column)`.
 
 Provide the level name (matches the `Level.name` property) and the mode you want
-to sequence (`Wall` or `Column`) as ROS parameters. The executor defaults to the
-hosted Aura instance requested above (`neo4j+s://ae1083a1.databases.neo4j.io`
-with the provided managed credentials), so you can launch it without overriding
-the connection settings:
+to sequence (`Wall` or `Column`) as ROS parameters. If you omit the level name,
+the node automatically selects the first level in Neo4j that contains panels for
+the chosen mode and reports the selection. The executor defaults to the hosted
+Aura instance requested above (`neo4j+s://ae1083a1.databases.neo4j.io` with the
+provided managed credentials), so you can launch it without overriding the
+connection settings:
 
 ```bash
 ros2 run crane_builder neo4j_panel_chain_executor
