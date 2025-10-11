@@ -21,6 +21,15 @@ ros/
     └── crane_interfaces/        # Message package with PanelTask.msg.
 ```
 
+Both packages live directly under the workspace `src/` directory. Python-only
+packages such as `crane_builder` keep their code inside a folder that exposes a
+`setup.py`/`setup.cfg` (an **`ament_python`** package). Interface or CMake-based
+packages such as `crane_interfaces` live beside them and provide a
+`CMakeLists.txt` (an **`ament_cmake`** package). If you create additional
+packages, place each package folder at this same level—`src/<package_name>/`—and
+pick the build type (`ament_python` or `ament_cmake`) based on whether the
+package is pure Python or requires CMake/ROS IDL generation.
+
 Place any additional configuration files next to the provided examples under
 `src/crane_builder/config/`, and implement any extra Python nodes inside
 `src/crane_builder/crane_builder/`. New interface definitions should live in
