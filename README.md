@@ -2,8 +2,9 @@
 
 This repository is already structured as a ROS 2 Humble workspace. Clone (or
 copy) it into the location where you normally keep workspaces—e.g.
-`~/ros2_ws`—then run the usual `colcon` commands from the repository root. The
-workspace contains two ROS 2 Humble packages that work together to sequence
+`~/ros2_ws`—then run the usual `colcon` commands from the repository root (the
+directory that contains this `README.md` and the `src/` folder). The workspace
+contains two ROS 2 Humble packages that work together to sequence
 wall and column panel pick-and-place motions for a crane using only the IFC
 GUID, the panel's pick position, the placement target position, and the panel
 chain's `NEXT` linkage.
@@ -24,6 +25,35 @@ Place any additional configuration files next to the provided examples under
 `src/crane_builder/config/`, and implement any extra Python nodes inside
 `src/crane_builder/crane_builder/`. New interface definitions should live in
 `src/crane_interfaces` beside `PanelTask.msg`.
+
+### Using the packages inside another workspace
+
+If you already maintain a workspace such as `~/ros2_ws` and want these packages
+to live under `~/ros2_ws/src/`, you have two equivalent options:
+
+1. **Treat this repository as the workspace** (recommended). Clone it to
+   `~/ros2_ws` so that the repository root *is* your workspace root:
+   ```bash
+   cd ~
+   git clone <this-repo-url> ros2_ws
+   cd ros2_ws
+   colcon build --symlink-install
+   ```
+   This keeps the provided `src/` directory intact and avoids nesting workspaces.
+
+2. **Copy the packages into an existing workspace.** If you already have
+   `~/ros2_ws/src/`, you can move the two packages into that directory:
+   ```bash
+   cd ~/ros2_ws/src
+   git clone <this-repo-url> crane_panel_builder_tmp
+   mv crane_panel_builder_tmp/src/crane_builder .
+   mv crane_panel_builder_tmp/src/crane_interfaces .
+   rm -rf crane_panel_builder_tmp
+   cd ..
+   colcon build --symlink-install
+   ```
+   In this layout you keep using your original workspace root while reusing the
+   packages from this repository.
 
 ## Packages
 
