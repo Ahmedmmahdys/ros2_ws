@@ -100,7 +100,7 @@ class Neo4jPanelChainExecutor(Node):
         def run_query(label: str) -> List[Dict[str, object]]:
             query = f"""
             MATCH (panel:{label})
-            WHERE panel.ifcGuid IS NOT NULL
+            WHERE panel.ifcGuid IS NOT NULL AND panel.SequenceIndex IS NOT NULL
             OPTIONAL MATCH (panel)-[:{relationship}]->(next_panel)
             RETURN panel.ifcGuid AS ifc_guid,
                    panel.HookPoint AS hook_point,
