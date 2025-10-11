@@ -74,6 +74,7 @@ class Neo4jPanelChainExecutor(Node):
                 self._sequence_order,
                 self._panel_centers,
                 self._sequence_indices,
+                active_label,
             ) = self._load_panel_chain(panel_label, relationship, database)
         except Exception as exc:  # noqa: BLE001
             self.get_logger().error(f"Failed to load panel chain from Neo4j: {exc}")
@@ -87,41 +88,66 @@ class Neo4jPanelChainExecutor(Node):
             f"{self._sequence_indices[guid]}:{guid}" for guid in self._sequence_order
         )
         self.get_logger().info(
-            "Loaded %d panels from Neo4j (%s). Publishing to 'panel_task' with identity orientation.",
+            "Loaded %d panels from Neo4j using label '%s' (%s). Publishing to 'panel_task' with identity orientation.",
             len(self._sequence_order),
+            active_label,
             sequence_report,
         )
 
     def _load_panel_chain(
         self, panel_label: str, relationship: str, database: Optional[str]
-    ) -> Tuple[Dict[str, PanelLink], Optional[str], List[str], Dict[str, Point], Dict[str, int]]:
-        query = f"""
-        MATCH (panel:{panel_label})
-        WHERE panel.ifcGuid IS NOT NULL AND panel.SequenceIndex IS NOT NULL
-        OPTIONAL MATCH (panel)-[:{relationship}]->(next_panel)
-        RETURN panel.ifcGuid AS ifc_guid,
-               panel.HookPoint AS hook_point,
-               panel.PanelPosition AS panel_position,
-               panel.TargetPosition AS target_position,
-               panel.SequenceIndex AS sequence_index,
-               next_panel.ifcGuid AS next_ifc_guid
-        """
+    ) -> Tuple[Dict[str, PanelLink], Optional[str], List[str], Dict[str, Point], Dict[str, int], str]:
+        def run_query(label: str) -> List[Dict[str, object]]:
+            query = f"""
+            MATCH (panel:{label})
+            WHERE panel.ifcGuid IS NOT NULL AND panel.SequenceIndex IS NOT NULL
+            OPTIONAL MATCH (panel)-[:{relationship}]->(next_panel)
+            RETURN panel.ifcGuid AS ifc_guid,
+                   panel.HookPoint AS hook_point,
+                   panel.PanelPosition AS panel_position,
+                   panel.TargetPosition AS target_position,
+                   panel.SequenceIndex AS sequence_index,
+                   next_panel.ifcGuid AS next_ifc_guid
+            """
+
+            with self._driver.session(database=database) as session:
+                return list(session.run(query))
 
         panels: Dict[str, PanelLink] = {}
         panel_centers: Dict[str, Point] = {}
         sequence_indices: Dict[str, int] = {}
         used_indices: set[int] = set()
 
+        labels_to_try: List[str] = [panel_label]
+        if panel_label == "Panel":
+            # Older documentation referenced the generic :Panel label. Automatically
+            # fall back to the hosted Aura dataset's :FormworkPanel label so users
+            # upgrading from earlier revisions can load the chain without extra
+            # parameter overrides.
+            labels_to_try.append("FormworkPanel")
+
+        records: List[Dict[str, object]] = []
+        active_label = panel_label
+
         try:
-            with self._driver.session(database=database) as session:
-                records = list(session.run(query))
+            for label in labels_to_try:
+                records = run_query(label)
+                if records:
+                    active_label = label
+                    if label != panel_label:
+                        self.get_logger().warn(
+                            "No results found with label '%s'; using fallback label '%s'.",
+                            panel_label,
+                            label,
+                        )
+                    break
         except Neo4jError as exc:
             raise RuntimeError(f"Neo4j query failed: {exc}") from exc
 
         if not records:
             raise ValueError(
                 "No panels were returned from Neo4j. Ensure nodes are labelled correctly and include required properties."
-                f" Checked label '{panel_label}' and relationship '{relationship}'."
+                f" Checked labels {labels_to_try!r} and relationship '{relationship}'."
             )
 
         for record in records:
@@ -194,7 +220,7 @@ class Neo4jPanelChainExecutor(Node):
                     f"Panel {guid} NEXT chain points to {actual_next or '<end>'} but SequenceIndex expects {expected_next or '<end>'}."
                 )
 
-        return panels, head, ordered, panel_centers, sequence_indices
+        return panels, head, ordered, panel_centers, sequence_indices, active_label
 
     def _publish_next(self) -> None:
         if self._current_guid is None:
