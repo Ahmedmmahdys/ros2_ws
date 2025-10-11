@@ -34,7 +34,7 @@ class Neo4jPanelChainExecutor(Node):
             "password", "aVbfVqk-XZ17tl0UOjRLwpfmbV-tCY7JUe7RjnaBbVc"
         )
         self.declare_parameter("database", "")
-        self.declare_parameter("panel_label", "Panel")
+        self.declare_parameter("panel_label", "FormworkPanel")
         self.declare_parameter("next_relationship", "NEXT")
         self.declare_parameter("publish_period", 1.0)
 
@@ -121,6 +121,7 @@ class Neo4jPanelChainExecutor(Node):
         if not records:
             raise ValueError(
                 "No panels were returned from Neo4j. Ensure nodes are labelled correctly and include required properties."
+                f" Checked label '{panel_label}' and relationship '{relationship}'."
             )
 
         for record in records:

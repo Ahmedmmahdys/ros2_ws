@@ -117,7 +117,7 @@ additional parameters or orientation handling.
 To source the panel information directly from Neo4j instead of a YAML file,
 launch the Neo4j executor (after completing steps 1–3 above). The node expects
 every panel node (label defaults to
-`Panel`) to provide:
+`FormworkPanel`) to provide:
 
 - `ifcGuid`: unique identifier of the panel.
 - `HookPoint`: pick location (the hook/grab point) as either `[x, y, z]` or a
@@ -142,7 +142,7 @@ ros2 run crane_builder neo4j_panel_chain_executor \
     -p uri:=bolt://neo4j.example.com:7687 \
     -p user:=neo4j \
     -p password:=secret \
-    -p panel_label:=Panel \
+    -p panel_label:=FormworkPanel \
     -p next_relationship:=NEXT
 ```
 
