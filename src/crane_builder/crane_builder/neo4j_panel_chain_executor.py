@@ -100,7 +100,7 @@ class Neo4jPanelChainExecutor(Node):
         def run_query(label: str) -> List[Dict[str, object]]:
             query = f"""
             MATCH (panel:{label})
-            WHERE panel.ifcGuid IS NOT NULL AND panel.SequenceIndex IS NOT NULL
+            WHERE panel.ifcGuid IS NOT NULL
             OPTIONAL MATCH (panel)-[:{relationship}]->(next_panel)
             RETURN panel.ifcGuid AS ifc_guid,
                    panel.HookPoint AS hook_point,
@@ -127,11 +127,26 @@ class Neo4jPanelChainExecutor(Node):
             if fallback_label not in labels_to_try:
                 labels_to_try.append(fallback_label)
 
+        available_labels: Optional[set[str]] = None
+        try:
+            with self._driver.session(database=database) as session:
+                result = session.run("CALL db.labels()")
+                available_labels = {str(record[0]) for record in result if record and record[0]}
+        except Neo4jError as exc:
+            self.get_logger().warn(
+                "Unable to list Neo4j labels (continuing anyway): %s", exc
+            )
+
         records: List[Dict[str, object]] = []
         active_label = panel_label
 
         try:
             for label in labels_to_try:
+                if available_labels is not None and label not in available_labels:
+                    self.get_logger().debug(
+                        "Skipping label '%s' because it is not present in Neo4j.", label
+                    )
+                    continue
                 records = run_query(label)
                 if records:
                     active_label = label
@@ -146,9 +161,15 @@ class Neo4jPanelChainExecutor(Node):
             raise RuntimeError(f"Neo4j query failed: {exc}") from exc
 
         if not records:
+            available_note = (
+                f" Available labels: {sorted(available_labels)!r}."
+                if available_labels is not None
+                else ""
+            )
             raise ValueError(
                 "No panels were returned from Neo4j. Ensure nodes are labelled correctly and include required properties."
                 f" Checked labels {labels_to_try!r} and relationship '{relationship}'."
+                f"{available_note}"
             )
 
         for record in records:
