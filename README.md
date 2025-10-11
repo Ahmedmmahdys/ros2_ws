@@ -1,9 +1,29 @@
 # Crane Panel Builder Workspace
 
-This workspace contains two ROS 2 Humble packages that work together to sequence
+This repository is already structured as a ROS 2 Humble workspace. Clone (or
+copy) it into the location where you normally keep workspaces—e.g.
+`~/ros2_ws`—then run the usual `colcon` commands from the repository root. The
+workspace contains two ROS 2 Humble packages that work together to sequence
 wall and column panel pick-and-place motions for a crane using only the IFC
 GUID, the panel's pick position, the placement target position, and the panel
 chain's `NEXT` linkage.
+
+## Workspace layout
+
+```
+ros/
+├── README.md                     # You are here.
+└── src/
+    ├── crane_builder/           # Python package with the panel executors.
+    │   ├── config/              # Example YAML panel chain.
+    │   └── crane_builder/       # Python modules (nodes & utilities).
+    └── crane_interfaces/        # Message package with PanelTask.msg.
+```
+
+Place any additional configuration files next to the provided examples under
+`src/crane_builder/config/`, and implement any extra Python nodes inside
+`src/crane_builder/crane_builder/`. New interface definitions should live in
+`src/crane_interfaces` beside `PanelTask.msg`.
 
 ## Packages
 
