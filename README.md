@@ -125,23 +125,16 @@ every panel node (labelled `FormworkPanel` in the Aura dataset) to provide:
   mapping with `x`, `y`, `z` keys.
 - `PanelPosition`: the panel's center location, used for logging.
 - `TargetPosition`: `[x, y, z]` placement location of the panel.
-- A `NEXT` relationship linking each panel to the next one in the chain.
+- A `NEXT_*` relationship (for example `NEXT_1`, `NEXT_2`, …) linking each panel
+  to the next one in its wall/column chain. Each chain now lives in its own
+  relation type, so you can query any wall or column directly by selecting the
+  corresponding `NEXT_*` relation name.
 
-Panels must also be connected to the level you plan to install via the
-relationships created by the IFC importer:
-
-- Walls: `(:Level)-[:HAS_WALL]->(:Wall)-[:HAS_PART]->(:WallPart)` and each
-  panel is `(:FormworkPanel)-[:HOSTED_BY]->(:WallPart)`.
-- Columns: `(:Level)-[:HAS_COLUMN]->(:Column)` and each panel is
-  `(:FormworkPanel)-[:HOSTED_BY]->(:Column)`.
-
-Provide the level name (matches the `Level.name` property) and the mode you want
-to sequence (`Wall` or `Column`) as ROS parameters. If you omit the level name,
-the node automatically selects the first level in Neo4j that contains panels for
-the chosen mode and reports the selection. The executor defaults to the hosted
-Aura instance requested above (`neo4j+s://ae1083a1.databases.neo4j.io` with the
-provided managed credentials), so you can launch it without overriding the
-connection settings:
+The executor defaults to the hosted Aura instance requested above
+(`neo4j+s://ae1083a1.databases.neo4j.io` with the provided managed credentials)
+and publishes whichever chain you request via the `chain_relation` parameter.
+If you omit the parameter the node sequences the panels connected by
+`NEXT_1`.
 
 ```bash
 ros2 run crane_builder neo4j_panel_chain_executor
@@ -155,12 +148,11 @@ ros2 run crane_builder neo4j_panel_chain_executor \
     -p uri:=bolt://neo4j.example.com:7687 \
     -p user:=neo4j \
     -p password:=secret \
-    -p level_name:="Level 01" \
-    -p mode:=Wall
+    -p chain_relation:=NEXT_12
 ```
 
-The executor gathers one chain per wall/column head on the specified level by
-following the `NEXT` relationship all the way to each chain's tail. Each chain
-is published in order: the `hook_point` of the outgoing `PanelTask` message
+The executor gathers the panels connected by the requested `NEXT_*` relation,
+following each chain from its head node to the tail node. Every link is
+published in order: the `hook_point` of the outgoing `PanelTask` message
 matches Neo4j's `HookPoint`, while `panel_position` mirrors `PanelPosition` so
 your crane has access to both the grab location and the panel centre.

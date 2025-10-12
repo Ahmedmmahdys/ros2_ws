@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 from typing import Dict, List, Optional, Tuple
 
 import rclpy
@@ -11,7 +13,7 @@ from .panel_chain_utils import PanelLink, point_from_value
 
 
 class Neo4jPanelChainExecutor(Node):
-    """Load panel chains from Neo4j using level + mode specific queries."""
+    """Load panel chains from Neo4j using NEXT_* relation selection."""
 
     def __init__(self) -> None:
         super().__init__("neo4j_panel_chain_executor")
@@ -22,8 +24,7 @@ class Neo4jPanelChainExecutor(Node):
             "password", "aVbfVqk-XZ17tl0UOjRLwpfmbV-tCY7JUe7RjnaBbVc"
         )
         self.declare_parameter("database", "")
-        self.declare_parameter("level_name", "")
-        self.declare_parameter("mode", "Wall")
+        self.declare_parameter("chain_relation", "NEXT_1")
         self.declare_parameter("publish_period", 1.0)
 
         uri = self.get_parameter("uri").get_parameter_value().string_value
@@ -31,16 +32,12 @@ class Neo4jPanelChainExecutor(Node):
         password = self.get_parameter("password").get_parameter_value().string_value
         database = self.get_parameter("database").get_parameter_value().string_value or None
 
-        requested_level = (
-            self.get_parameter("level_name").get_parameter_value().string_value.strip()
+        relation_param = (
+            self.get_parameter("chain_relation").get_parameter_value().string_value.strip()
         )
-
-        mode_param = self.get_parameter("mode").get_parameter_value().string_value.strip()
-        if not mode_param:
-            raise ValueError("mode parameter must be provided.")
-        mode = mode_param.lower()
-        if mode not in {"wall", "column"}:
-            raise ValueError("mode must be either 'Wall' or 'Column'.")
+        if not relation_param:
+            raise ValueError("chain_relation parameter must be provided and non-empty.")
+        relation_name = self._normalise_relation_name(relation_param)
 
         period = self.get_parameter("publish_period").get_parameter_value().double_value
         if period <= 0:
@@ -60,34 +57,15 @@ class Neo4jPanelChainExecutor(Node):
             raise
 
         try:
-            level_name = requested_level or self._select_default_level(mode, database)
-        except Exception as exc:  # noqa: BLE001 - propagate discovery issues clearly
-            self.get_logger().error(f"Failed to determine a level to query: {exc}")
-            self._driver.close()
-            raise
-
-        if not level_name:
-            self._driver.close()
-            raise ValueError(
-                "Neo4j did not return any levels containing panels for the requested mode."
-            )
-
-        if not requested_level:
-            self.get_logger().info(
-                f"No level_name parameter supplied; defaulting to level '{level_name}' discovered in Neo4j."
-            )
-
-        try:
             self._panels, self._sequence_order = self._load_panel_chain(
-                level_name, mode, database
+                relation_name, database
             )
         except Exception as exc:  # noqa: BLE001
             self.get_logger().error(f"Failed to load panel chain from Neo4j: {exc}")
             self._driver.close()
             raise
 
-        self._mode = "Wall" if mode == "wall" else "Column"
-        self._level_name = level_name
+        self._relation = relation_name
         self._next_index = 0
 
         self._publisher = self.create_publisher(PanelTask, "panel_task", 10)
@@ -95,95 +73,57 @@ class Neo4jPanelChainExecutor(Node):
 
         ordered_ifc_guids = ", ".join(self._sequence_order)
         self.get_logger().info(
-            "Loaded %d panels from Neo4j for level '%s' (%s mode). Publishing to 'panel_task' with identity orientation. Order: %s"
-            % (len(self._sequence_order), self._level_name, self._mode, ordered_ifc_guids)
+            "Loaded %d panels from Neo4j using relation '%s'. Publishing to 'panel_task' with identity orientation. Order: %s"
+            % (len(self._sequence_order), self._relation, ordered_ifc_guids)
         )
 
-    def _select_default_level(self, mode: str, database: Optional[str]) -> str:
-        """Return the first level that contains panels for the requested mode."""
+    def _normalise_relation_name(self, relation: str) -> str:
+        """Validate the requested relation name and return it in Neo4j format."""
 
-        if mode == "wall":
-            query = """
-            MATCH (lvl:Level)-[:HAS_WALL]->(:Wall)-[:HAS_PART]->(:WallPart)
-            MATCH (:FormworkPanel)-[:HOSTED_BY]->(:WallPart)
-            RETURN DISTINCT lvl.name AS level_name
-            ORDER BY level_name
-            LIMIT 1
-            """
-        else:
-            query = """
-            MATCH (lvl:Level)-[:HAS_COLUMN]->(:Column)
-            MATCH (:FormworkPanel)-[:HOSTED_BY]->(:Column)
-            RETURN DISTINCT lvl.name AS level_name
-            ORDER BY level_name
-            LIMIT 1
-            """
+        candidate = relation.strip()
+        if not candidate:
+            raise ValueError("Relation name must be non-empty after stripping whitespace.")
 
-        with self._driver.session(database=database) as session:
-            record = session.run(query).single()
-
-        if not record:
+        if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", candidate):
             raise ValueError(
-                "Neo4j contains no levels with FormworkPanel nodes linked via the required relationships."
+                "Relation names may only contain letters, digits, and underscores and cannot start with a digit."
             )
 
-        level_name = (record.get("level_name") or "").strip()
-        if not level_name:
-            raise ValueError(
-                "Neo4j returned a level without a name while selecting a default level."
-            )
-
-        return level_name
+        return candidate
 
     def _load_panel_chain(
-        self, level_name: str, mode: str, database: Optional[str]
+        self, relation: str, database: Optional[str]
     ) -> Tuple[Dict[str, PanelLink], List[str]]:
-        wall_query = """
-        MATCH (lvl:Level {name: $level_name})-[:HAS_WALL]->(:Wall)-[:HAS_PART]->(part:WallPart)
-        MATCH (head:FormworkPanel)-[:HOSTED_BY]->(part)
-        WHERE NOT ()-[:NEXT]->(head)
+        query = f"""
+        MATCH (head:FormworkPanel)
+        WHERE NOT ()-[:{relation}]->(head)
         WITH DISTINCT head
-        MATCH path=(head)-[:NEXT*0..]->(tail:FormworkPanel)
-        WHERE NOT (tail)-[:NEXT]->(:FormworkPanel)
+        MATCH path=(head)-[:{relation}*0..]->(tail:FormworkPanel)
+        WHERE NOT (tail)-[:{relation}]->(:FormworkPanel)
         WITH head, nodes(path) AS node_list
         RETURN head.ifcGuid AS head_guid,
                [n IN node_list | n.ifcGuid] AS chain_id,
-               [n IN node_list | {
+               [n IN node_list | {{
                    ifcGuid: n.ifcGuid,
                    HookPoint: n.HookPoint,
                    PanelPosition: n.PanelPosition,
                    TargetPosition: n.TargetPosition
-               }] AS panels
+               }}] AS panels
         ORDER BY head_guid
         """
-
-        column_query = """
-        MATCH (lvl:Level {name: $level_name})-[:HAS_COLUMN]->(host:Column)
-        MATCH (head:FormworkPanel)-[:HOSTED_BY]->(host)
-        WHERE NOT ()-[:NEXT]->(head)
-        WITH DISTINCT head
-        MATCH path=(head)-[:NEXT*0..]->(tail:FormworkPanel)
-        WHERE NOT (tail)-[:NEXT]->(:FormworkPanel)
-        WITH head, nodes(path) AS node_list
-        RETURN head.ifcGuid AS head_guid,
-               [n IN node_list | n.ifcGuid] AS chain_id,
-               [n IN node_list | {
-                   ifcGuid: n.ifcGuid,
-                   HookPoint: n.HookPoint,
-                   PanelPosition: n.PanelPosition,
-                   TargetPosition: n.TargetPosition
-               }] AS panels
-        ORDER BY head_guid
-        """
-
-        query = wall_query if mode == "wall" else column_query
 
         with self._driver.session(database=database) as session:
-            records = list(session.run(query, level_name=level_name))
+            available_relations = self._fetch_available_relations(session)
+            if available_relations and relation not in available_relations:
+                raise ValueError(
+                    "Relation '%s' does not exist in Neo4j. Available relations include: %s"
+                    % (relation, ", ".join(sorted(available_relations)))
+                )
+            records = list(session.run(query))
 
         if not records:
             raise ValueError(
-                "Neo4j returned no panels for the requested level and mode. Verify the level name and relationships."
+                f"Neo4j returned no panels connected by relation '{relation}'. Verify the relation name and NEXT_* links."
             )
 
         panels: Dict[str, PanelLink] = {}
@@ -245,6 +185,25 @@ class Neo4jPanelChainExecutor(Node):
             raise ValueError("No panels were assembled from Neo4j records.")
 
         return panels, sequence_order
+
+    def _fetch_available_relations(self, session) -> List[str]:
+        """Return the list of relationship types available in the database."""
+
+        try:
+            result = list(session.run("CALL db.relationshipTypes()"))
+        except Exception as exc:  # noqa: BLE001 - log and continue without the hint
+            self.get_logger().warning(
+                f"Unable to list relationship types from Neo4j: {exc}"
+            )
+            return []
+
+        relations: List[str] = []
+        for record in result:
+            value = record.get("relationshipType")
+            if isinstance(value, str):
+                relations.append(value)
+
+        return relations
 
     def _publish_next(self) -> None:
         if self._next_index >= len(self._sequence_order):
