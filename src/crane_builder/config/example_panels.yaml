@@ -1,13 +1,16 @@
 panels:
   - ifc_guid: "3lJv1f8KHA5OQ9PhtH"
+    hook_point: [0.0, 1.2, 0.0]
     panel_position: [0.0, 1.2, 0.0]
     target_position: [5.0, 1.2, 0.0]
     next: "1KU29nAhP3eZH_xd9"
   - ifc_guid: "1KU29nAhP3eZH_xd9"
+    hook_point: [0.0, 2.4, 0.0]
     panel_position: [0.0, 2.4, 0.0]
     target_position: [5.0, 2.4, 0.0]
     next: "5ZWn7gDW17hQ0psrS"
   - ifc_guid: "5ZWn7gDW17hQ0psrS"
+    hook_point: [0.0, 3.6, 0.0]
     panel_position: [0.0, 3.6, 0.0]
     target_position: [5.0, 3.6, 0.0]
     next:

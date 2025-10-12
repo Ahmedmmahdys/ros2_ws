@@ -1,4 +1,5 @@
 string ifc_guid
+geometry_msgs/Point hook_point
 geometry_msgs/Point panel_position
 geometry_msgs/Point target_position
 string next_ifc_guid

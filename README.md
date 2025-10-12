@@ -67,8 +67,8 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
 ## Packages
 
 - `crane_interfaces`: defines the `PanelTask` message that carries only the
-  required information (`ifc_guid`, `panel_position`, `target_position`, and
-  `next_ifc_guid`).
+  required information (`ifc_guid`, `hook_point`, `panel_position`,
+  `target_position`, and `next_ifc_guid`).
 - `crane_builder`: provides two Python nodes for sequencing panel moves:
   - `panel_chain_executor` reads a YAML description of your wall or column
     panels and publishes `PanelTask` messages in strict NEXT-chain order.
@@ -98,7 +98,9 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
 4. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
    so that it contains one entry per panel with the following keys only:
    - `ifc_guid`: unique identifier of the panel.
-   - `panel_position`: `[x, y, z]` pick location of the panel.
+   - `hook_point`: `[x, y, z]` coordinates of the grab point provided by
+     `HookPoint`.
+   - `panel_position`: `[x, y, z]` coordinates of the panel centre (`PanelPosition`).
    - `target_position`: `[x, y, z]` placement location of the panel.
    - `next`: the IFC GUID of the next panel in the chain, or empty/`null` for the
      final element.
@@ -159,6 +161,6 @@ ros2 run crane_builder neo4j_panel_chain_executor \
 
 The executor gathers one chain per wall/column head on the specified level by
 following the `NEXT` relationship all the way to each chain's tail. Each chain
-is published in order, and the `panel_position` of the outgoing `PanelTask`
-messages corresponds to Neo4j's `HookPoint`, ensuring the pick uses the precise
-grab location provided by the database.
+is published in order: the `hook_point` of the outgoing `PanelTask` message
+matches Neo4j's `HookPoint`, while `panel_position` mirrors `PanelPosition` so
+your crane has access to both the grab location and the panel centre.

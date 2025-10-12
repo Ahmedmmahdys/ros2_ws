@@ -13,6 +13,7 @@ class PanelLink:
     """Represents a single panel move instruction."""
 
     ifc_guid: str
+    hook_point: Point
     panel_position: Point
     target_position: Point
     next_ifc_guid: Optional[str]
@@ -81,4 +82,3 @@ def resolve_head(panels: Mapping[str, PanelLink]) -> str:
             "The panel chain must contain exactly one starting element (one GUID not referenced as a 'next')."
         )
     return heads.pop()
-

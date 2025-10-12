@@ -5,7 +5,6 @@ from typing import Dict, List, Optional, Tuple
 import rclpy
 from rclpy.node import Node
 from crane_interfaces.msg import PanelTask
-from geometry_msgs.msg import Point
 from neo4j import GraphDatabase
 
 from .panel_chain_utils import PanelLink, point_from_value
@@ -79,11 +78,9 @@ class Neo4jPanelChainExecutor(Node):
             )
 
         try:
-            (
-                self._panels,
-                self._sequence_order,
-                self._panel_centers,
-            ) = self._load_panel_chain(level_name, mode, database)
+            self._panels, self._sequence_order = self._load_panel_chain(
+                level_name, mode, database
+            )
         except Exception as exc:  # noqa: BLE001
             self.get_logger().error(f"Failed to load panel chain from Neo4j: {exc}")
             self._driver.close()
@@ -140,7 +137,7 @@ class Neo4jPanelChainExecutor(Node):
 
     def _load_panel_chain(
         self, level_name: str, mode: str, database: Optional[str]
-    ) -> Tuple[Dict[str, PanelLink], List[str], Dict[str, Point]]:
+    ) -> Tuple[Dict[str, PanelLink], List[str]]:
         wall_query = """
         MATCH (lvl:Level {name: $level_name})-[:HAS_WALL]->(:Wall)-[:HAS_PART]->(part:WallPart)
         MATCH (head:FormworkPanel)-[:HOSTED_BY]->(part)
@@ -190,7 +187,6 @@ class Neo4jPanelChainExecutor(Node):
             )
 
         panels: Dict[str, PanelLink] = {}
-        panel_centers: Dict[str, Point] = {}
         sequence_order: List[str] = []
 
         for record in records:
@@ -226,29 +222,29 @@ class Neo4jPanelChainExecutor(Node):
                 hook_point = point_from_value(
                     panel_data.get("HookPoint"), field_name=f"{guid}.HookPoint"
                 )
-                target_point = point_from_value(
-                    panel_data.get("TargetPosition"), field_name=f"{guid}.TargetPosition"
-                )
                 panel_center = point_from_value(
                     panel_data.get("PanelPosition"), field_name=f"{guid}.PanelPosition"
+                )
+                target_point = point_from_value(
+                    panel_data.get("TargetPosition"), field_name=f"{guid}.TargetPosition"
                 )
 
                 next_guid = chain_ids[idx + 1] if idx + 1 < len(chain_ids) else None
 
                 panels[guid] = PanelLink(
                     ifc_guid=guid,
-                    panel_position=hook_point,
+                    hook_point=hook_point,
+                    panel_position=panel_center,
                     target_position=target_point,
                     next_ifc_guid=next_guid,
                 )
-                panel_centers[guid] = panel_center
 
             sequence_order.extend(chain_ids)
 
         if not sequence_order:
             raise ValueError("No panels were assembled from Neo4j records.")
 
-        return panels, sequence_order, panel_centers
+        return panels, sequence_order
 
     def _publish_next(self) -> None:
         if self._next_index >= len(self._sequence_order):
@@ -261,29 +257,24 @@ class Neo4jPanelChainExecutor(Node):
 
         message = PanelTask()
         message.ifc_guid = link.ifc_guid
+        message.hook_point = link.hook_point
         message.panel_position = link.panel_position
         message.target_position = link.target_position
         message.next_ifc_guid = link.next_ifc_guid or ""
 
         self._publisher.publish(message)
 
-        center = self._panel_centers.get(link.ifc_guid)
-        if center:
-            self.get_logger().info(
-                "Dispatched panel %s (center: %.3f, %.3f, %.3f) -> next %s"
-                % (
-                    link.ifc_guid,
-                    center.x,
-                    center.y,
-                    center.z,
-                    link.next_ifc_guid or "<end>",
-                )
+        center = link.panel_position
+        self.get_logger().info(
+            "Dispatched panel %s (center: %.3f, %.3f, %.3f) -> next %s"
+            % (
+                link.ifc_guid,
+                center.x,
+                center.y,
+                center.z,
+                link.next_ifc_guid or "<end>",
             )
-        else:
-            self.get_logger().info(
-                "Dispatched panel %s -> next %s"
-                % (link.ifc_guid, link.next_ifc_guid or "<end>")
-            )
+        )
 
         self._next_index += 1
         if self._next_index >= len(self._sequence_order):

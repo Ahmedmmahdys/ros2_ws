@@ -3,11 +3,11 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Dict, Optional
 
+import yaml
 import rclpy
-from rclpy.node import Node
 from ament_index_python.packages import get_package_share_directory
 from crane_interfaces.msg import PanelTask
-import yaml
+from rclpy.node import Node
 
 from .panel_chain_utils import PanelLink, point_from_value, resolve_head
 
@@ -23,7 +23,7 @@ def load_panel_chain(chain_path: Path) -> tuple[Dict[str, PanelLink], Optional[s
     if not isinstance(panels_raw, list) or not panels_raw:
         raise ValueError("The panel chain file must define a non-empty 'panels' list.")
 
-    allowed_keys = {"ifc_guid", "panel_position", "target_position", "next"}
+    allowed_keys = {"ifc_guid", "hook_point", "panel_position", "target_position", "next"}
     panels: Dict[str, PanelLink] = {}
     for entry in panels_raw:
         if not isinstance(entry, dict):
@@ -48,6 +48,7 @@ def load_panel_chain(chain_path: Path) -> tuple[Dict[str, PanelLink], Optional[s
         if ifc_guid in panels:
             raise ValueError(f"Duplicate panel definition for ifc_guid {ifc_guid} detected.")
 
+        hook_point = point_from_value(entry["hook_point"], field_name="hook_point")
         panel_position = point_from_value(entry["panel_position"], field_name="panel_position")
         target_position = point_from_value(entry["target_position"], field_name="target_position")
 
@@ -59,6 +60,7 @@ def load_panel_chain(chain_path: Path) -> tuple[Dict[str, PanelLink], Optional[s
 
         panels[ifc_guid] = PanelLink(
             ifc_guid=ifc_guid,
+            hook_point=hook_point,
             panel_position=panel_position,
             target_position=target_position,
             next_ifc_guid=next_ifc_guid,
@@ -111,6 +113,7 @@ class PanelChainExecutor(Node):
         link = self._panels[self._current_guid]
         message = PanelTask()
         message.ifc_guid = link.ifc_guid
+        message.hook_point = link.hook_point
         message.panel_position = link.panel_position
         message.target_position = link.target_position
         message.next_ifc_guid = link.next_ifc_guid or ""
