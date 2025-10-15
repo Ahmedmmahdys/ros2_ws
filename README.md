@@ -79,6 +79,23 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
   Both nodes publish on the `panel_task` topic and assume an identity
   orientation for every pick and place (no rotation is applied).
 
+## Data contract
+
+Each panel task must include only the minimal information needed to pick and
+place a panel:
+
+- `ifcGuid`: globally unique identifier of the panel.
+- `HookPoint`: pick location (the crane attaches to this pose).
+- `TargetPosition`: placement location for the panel.
+- `NEXT_*`: exactly one NEXT edge (for example `NEXT_1` … `NEXT_26`) that links
+  the panel to the following panel on the same wall or column.
+
+`HookPoint` is always the pick reference and `TargetPosition` is always the
+placement reference—there is no fallback to the panel centre (`PanelPosition`).
+NEXT chains are **host-scoped**: each wall or column exposes its own chain and
+must be executed independently with no cross-host jumps. All coordinates are
+expressed in metres within a single world frame (typically `map`).
+
 ## Usage
 
 1. Source your ROS 2 Humble environment (skip if your shell already sources it):
@@ -156,3 +173,13 @@ following each chain from its head node to the tail node. Every link is
 published in order: the `hook_point` of the outgoing `PanelTask` message
 matches Neo4j's `HookPoint`, while `panel_position` mirrors `PanelPosition` so
 your crane has access to both the grab location and the panel centre.
+
+## Gazebo & SDF conventions
+
+When simulating the RCAN workflow in Gazebo, ensure each panel's SDF model is
+stored under a GUID-named folder (for example `models/<ifc_guid>/model.sdf`) and
+set `GZ_SIM_RESOURCE_PATH` (Gazebo Fortress) or `GAZEBO_MODEL_PATH` (Gazebo
+Classic) to the root directory containing those models. Runtime attach and
+release corresponds to creating or destroying a fixed joint between
+`crane::hook_link` and `<ifc_guid>::body::grasp`. Keep model names unique across
+the simulation to avoid accidental re-use of meshes or joints.

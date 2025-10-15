@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import math
 from typing import Dict, Optional
 
 import yaml
@@ -87,9 +88,14 @@ class PanelChainExecutor(Node):
             get_package_share_directory("crane_builder")
         ) / "config" / "example_panels.yaml"
         self.declare_parameter("panel_chain_file", str(default_chain))
+        self.declare_parameter("frame_id", "map")
 
         chain_path = Path(
             self.get_parameter("panel_chain_file").get_parameter_value().string_value
+        )
+
+        self._frame_id = (
+            self.get_parameter("frame_id").get_parameter_value().string_value
         )
 
         try:
@@ -98,10 +104,10 @@ class PanelChainExecutor(Node):
             self.get_logger().error(f"Failed to load panel chain: {exc}")
             raise
 
-        self._publisher = self.create_publisher(PanelTask, "panel_task", 10)
+        self._publisher = self.create_publisher(PanelTask, "/panel_task", 10)
         self._timer = self.create_timer(1.0, self._publish_next)
         self.get_logger().info(
-            "Panel chain executor ready. Publishing tasks to 'panel_task' with identity orientation."
+            "Panel chain executor ready. Publishing tasks to '/panel_task' with identity orientation."
         )
 
     def _publish_next(self) -> None:
@@ -111,6 +117,14 @@ class PanelChainExecutor(Node):
             return
 
         link = self._panels[self._current_guid]
+
+        if not self._valid_point(link.hook_point) or not self._valid_point(link.target_position):
+            self.get_logger().error(
+                f"Skipping panel {link.ifc_guid} due to invalid hook or target coordinates."
+            )
+            self._current_guid = link.next_ifc_guid
+            return
+
         message = PanelTask()
         message.ifc_guid = link.ifc_guid
         message.hook_point = link.hook_point
@@ -124,6 +138,9 @@ class PanelChainExecutor(Node):
         )
 
         self._current_guid = link.next_ifc_guid
+
+    def _valid_point(self, point) -> bool:
+        return all(math.isfinite(value) for value in (point.x, point.y, point.z))
 
 
 def main() -> None:
