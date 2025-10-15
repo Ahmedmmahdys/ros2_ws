@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import re
 
 from typing import Dict, List, Optional, Tuple
@@ -68,12 +69,12 @@ class Neo4jPanelChainExecutor(Node):
         self._relation = relation_name
         self._next_index = 0
 
-        self._publisher = self.create_publisher(PanelTask, "panel_task", 10)
+        self._publisher = self.create_publisher(PanelTask, "/panel_task", 10)
         self._timer = self.create_timer(period, self._publish_next)
 
         ordered_ifc_guids = ", ".join(self._sequence_order)
         self.get_logger().info(
-            "Loaded %d panels from Neo4j using relation '%s'. Publishing to 'panel_task' with identity orientation. Order: %s"
+            "Loaded %d panels from Neo4j using relation '%s'. Publishing to '/panel_task' with identity orientation. Order: %s"
             % (len(self._sequence_order), self._relation, ordered_ifc_guids)
         )
 
@@ -214,6 +215,13 @@ class Neo4jPanelChainExecutor(Node):
         guid = self._sequence_order[self._next_index]
         link = self._panels[guid]
 
+        if not self._valid_point(link.hook_point) or not self._valid_point(link.target_position):
+            self.get_logger().error(
+                f"Skipping panel {guid} due to invalid hook or target coordinates."
+            )
+            self._next_index += 1
+            return
+
         message = PanelTask()
         message.ifc_guid = link.ifc_guid
         message.hook_point = link.hook_point
@@ -239,6 +247,9 @@ class Neo4jPanelChainExecutor(Node):
         if self._next_index >= len(self._sequence_order):
             self.get_logger().info("Panel chain complete; stopping publication timer.")
             self._timer.cancel()
+
+    def _valid_point(self, point) -> bool:
+        return all(math.isfinite(value) for value in (point.x, point.y, point.z))
 
     def destroy_node(self) -> bool:
         if hasattr(self, "_driver"):

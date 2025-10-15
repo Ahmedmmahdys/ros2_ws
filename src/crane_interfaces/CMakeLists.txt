@@ -7,11 +7,12 @@ find_package(rosidl_default_generators REQUIRED)
 
 set(msg_files
   "msg/PanelTask.msg"
+  "msg/TaskStatus.msg"
 )
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   ${msg_files}
-  DEPENDENCIES geometry_msgs
+  DEPENDENCIES geometry_msgs builtin_interfaces
 )
 
 ament_export_dependencies(rosidl_default_runtime)
