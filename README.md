@@ -81,113 +81,139 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
   `panel_task` topic and assumes an identity orientation (no rotation is
   applied).
 
-## Usage
+## Step-by-step run guide
 
-### 1. Common ROS 2 Humble setup
+The following checklist assumes a clean ROS 2 Humble workstation. Each numbered
+step builds on the previous one—walk through them in order whenever you set up a
+fresh machine or want to verify an existing installation.
 
-All packages target ROS 2 Humble APIs. Start every new shell session by sourcing
-your Humble installation:
+### 1. Prepare a clean shell
+
+Open a new terminal and source only the Humble environment (avoid mixing in ROS 1
+or other overlays):
 
 ```bash
 source /opt/ros/humble/setup.bash
 ```
 
-Install the single Python dependency once (normally handled by `rosdep`):
+If you had previously sourced another workspace in this terminal, open a new
+tab/window instead so no stale `CATKIN_*` cache entries leak into the Humble
+build.
+
+### 2. Position the workspace
+
+Change into the workspace root—the directory that contains this `README.md` and
+the `src/` folder. If you cloned the repository to `~/ros2_ws`, that command is:
+
+```bash
+cd ~/ros2_ws
+```
+
+Run `ls` and confirm you see the `src/` directory with the three packages inside
+(`crane_builder`, `crane_interfaces`, `rcan_executor`). If you have other copies
+of the same packages elsewhere on disk, remove or rename them to avoid colcon's
+duplicate-package guard.
+
+### 3. Install Python dependencies (one time)
+
+Install the Neo4j Python driver in your user site-packages. Skip this step if
+`pip` reports that the requirement is already satisfied:
 
 ```bash
 pip install --user neo4j
 ```
 
-Build the workspace from the repository root. If you previously built another
-copy of these packages in the same workspace, clear the old artifacts first:
+### 4. Optionally clean old build artifacts
+
+If you are reusing a workspace that was built before, remove the `build/`,
+`install/`, and `log/` directories so the next build starts from a blank slate:
 
 ```bash
-rm -rf build install log  # optional: only if you're cleaning an old build
+rm -rf build install log
+```
+
+### 5. Build the workspace with colcon
+
+From the workspace root run:
+
+```bash
 colcon build --symlink-install
+```
+
+The build should finish without warnings about `CATKIN_*` variables. If you do
+see such warnings, double-check that the terminal was sourced only with Humble
+(`step 1`) and that no other workspaces remain in your current `AMENT_PREFIX_PATH`.
+
+### 6. Source the workspace overlay
+
+After a successful build, overlay the generated setup file so your shell knows
+about the newly built packages:
+
+```bash
 source install/setup.bash
 ```
 
-Run the commands from the root that owns the `src/` directory shown earlier. If
-`colcon` reports duplicate packages, remove or rename any other workspaces on
-disk that still contain these package folders so only one copy remains.
+Whenever you open a new terminal, repeat steps 1 and 6 so both the base Humble
+environment and this workspace are sourced.
 
-### 2. Stream panel tasks from Neo4j
+### 7. Configure Neo4j access
 
-Panel tasks always originate from Neo4j. The executor reads the active NEXT
-chain directly from the graph so you never need to maintain a parallel YAML
-representation. Ensure each `FormworkPanel` node exposes the required fields and
-links to the next element through a dedicated `NEXT_*` relation (for example
-`NEXT_1`, `NEXT_2`, …). After the common setup, launch the executor with:
+Ensure the Neo4j instance that holds your panel data is reachable. The executor
+expects each `FormworkPanel` node to provide `ifcGuid`, `HookPoint`,
+`PanelPosition`, and `TargetPosition` properties and to connect to the next panel
+via a dedicated `NEXT_*` relationship (for example `NEXT_1`). Keep the URI,
+username, password, database name, and relation type handy—you will pass them as
+parameters in the next step if they differ from the defaults.
+
+### 8. Stream panel tasks from Neo4j
+
+Start the Neo4j-backed executor. It publishes `crane_interfaces/PanelTask`
+messages to the `panel_task` topic in the same order they appear in the selected
+chain:
 
 ```bash
 ros2 run crane_builder neo4j_panel_chain_executor
 ```
 
-Override connection settings or select a different chain at the command line as
-needed:
+Override connection details or select another NEXT chain at launch time:
 
 ```bash
 ros2 run crane_builder neo4j_panel_chain_executor \
   --ros-args \
-    -p uri:=neo4j+s://ae1083a1.databases.neo4j.io \
-    -p user:=neo4j \
-    -p password:=<your-password> \
-    -p database:=neo4j \
+    -p uri:=neo4j+s://<host>:<port> \
+    -p user:=<username> \
+    -p password:=<password> \
+    -p database:=<database> \
     -p chain_relation:=NEXT_5
 ```
 
-The Neo4j executor is now the sole source of panel tasks, keeping the workspace
-aligned with the production graph data.
+Leave this node running while downstream consumers subscribe to the
+`panel_task` topic.
 
-### 3. Run the RCAN executor
+### 9. Run the RCAN executor
 
-After sourcing the workspace overlay you can start the RCAN executor to observe
-incoming panel tasks streamed from Neo4j:
+In a second terminal (repeat steps 1 and 6 there), launch the RCAN executor that
+listens to the panel tasks:
 
 ```bash
 ros2 run rcan_executor rcan_executor
 ```
 
-The node subscribes to the `panel_task` topic by default. Use the
-`panel_task_topic` parameter to point it at a different topic if needed:
+The node subscribes to `/panel_task` by default. If your deployment uses a
+different topic name, override it with:
 
 ```bash
 ros2 run rcan_executor rcan_executor --ros-args -p panel_task_topic:=/my_topic
 ```
 
-- `ifcGuid`: unique identifier of the panel.
-- `HookPoint`: pick location (the hook/grab point) as either `[x, y, z]` or a
-  mapping with `x`, `y`, `z` keys.
-- `PanelPosition`: the panel's center location, used for logging.
-- `TargetPosition`: `[x, y, z]` placement location of the panel.
-- A `NEXT_*` relationship (for example `NEXT_1`, `NEXT_2`, …) linking each panel
-  to the next one in its wall/column chain. Each chain now lives in its own
-  relation type, so you can query any wall or column directly by selecting the
-  corresponding `NEXT_*` relation name.
+### 10. Verify the message flow (optional)
 
-The executor defaults to the hosted Aura instance requested above
-(`neo4j+s://ae1083a1.databases.neo4j.io` with the provided managed credentials)
-and publishes whichever chain you request via the `chain_relation` parameter.
-If you omit the parameter the node sequences the panels connected by
-`NEXT_1`.
+Use the ROS 2 CLI to inspect the topic and confirm that messages are flowing:
 
 ```bash
-ros2 run crane_builder neo4j_panel_chain_executor
+ros2 topic list | grep panel_task
+ros2 topic echo /panel_task
 ```
 
-Example invocation with explicit overrides:
-
-```bash
-ros2 run crane_builder neo4j_panel_chain_executor \
-  --ros-args \
-    -p uri:=bolt://neo4j.example.com:7687 \
-    -p user:=neo4j \
-    -p password:=secret \
-    -p chain_relation:=NEXT_12
-```
-
-The executor gathers the panels connected by the requested `NEXT_*` relation,
-following each chain from its head node to the tail node. Every link is
-published in order: the `hook_point` of the outgoing `PanelTask` message
-matches Neo4j's `HookPoint`, while `panel_position` mirrors `PanelPosition` so
-your crane has access to both the grab location and the panel centre.
+You should see each `PanelTask` emitted by `neo4j_panel_chain_executor`. Stop the
+nodes with `Ctrl+C` when you are done.
