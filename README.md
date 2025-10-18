@@ -29,6 +29,12 @@ packages, place each package folder at this same levelâ€”`src/<package_name>/`â€
 pick the build type (`ament_python` or `ament_cmake`) based on whether the
 package is pure Python or requires CMake/ROS IDL generation.
 
+> **Note:** This workspace targets ROS 2 Humble exclusively and is built with
+> `colcon`/ament. Catkin (the ROS 1 build system) is not required or used
+> anywhere. If you see lingering `CATKIN_*` cache variables from an older ROS 1
+> environment, remove them or start a fresh shell sourced only with `/opt/ros/
+> humble/setup.bash` before running `colcon build`.
+
 Implement any extra Python nodes inside `src/crane_builder/crane_builder/` and
 add supporting resources as needed within the package. New interface definitions
 should live in `src/crane_interfaces` beside `PanelTask.msg`.
