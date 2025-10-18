@@ -90,11 +90,18 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
    ```bash
    pip install --user neo4j
    ```
-3. Build the workspace:
+3. Build the workspace (if you previously built another copy of these packages,
+   remove the old build artifacts first by deleting the `build/`, `install/`,
+   and `log/` directories inside that workspace):
    ```bash
+   rm -rf build install log  # optional: only if you're cleaning an old build
    colcon build --symlink-install
    source install/setup.bash
    ```
+   Make sure you are running these commands from the workspace root that owns
+   the `src/` directory shown above; if `colcon` reports duplicate packages it
+   means another workspace on disk still contains the same package folders and
+   needs to be cleaned up or removed.
 4. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
    so that it contains one entry per panel with the following keys only:
    - `ifc_guid`: unique identifier of the panel.
@@ -113,6 +120,22 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
 The node publishes each `PanelTask` sequentially, allowing your crane control
 stack to consume the topic and execute the pick-and-place motions without any
 additional parameters or orientation handling.
+
+### Running the RCAN executor
+
+After sourcing the workspace overlay you can start the RCAN executor directly
+to observe the incoming panel tasks:
+
+```bash
+ros2 run rcan_executor rcan_executor
+```
+
+The node subscribes to the `panel_task` topic by default. Use the
+`panel_task_topic` parameter to point it at a different topic if needed:
+
+```bash
+ros2 run rcan_executor rcan_executor --ros-args -p panel_task_topic:=/my_topic
+```
 
 ### Neo4j-driven execution
 
