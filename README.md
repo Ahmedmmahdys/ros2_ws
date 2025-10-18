@@ -15,8 +15,7 @@ chain's `NEXT` linkage.
 ros/
 ├── README.md                     # You are here.
 └── src/
-    ├── crane_builder/           # Python package with the panel executors.
-    │   ├── config/              # Example YAML panel chain.
+    ├── crane_builder/           # Python package with the Neo4j executor.
     │   └── crane_builder/       # Python modules (nodes & utilities).
     └── crane_interfaces/        # Message package with PanelTask.msg.
 ```
@@ -30,10 +29,9 @@ packages, place each package folder at this same level—`src/<package_name>/`�
 pick the build type (`ament_python` or `ament_cmake`) based on whether the
 package is pure Python or requires CMake/ROS IDL generation.
 
-Place any additional configuration files next to the provided examples under
-`src/crane_builder/config/`, and implement any extra Python nodes inside
-`src/crane_builder/crane_builder/`. New interface definitions should live in
-`src/crane_interfaces` beside `PanelTask.msg`.
+Implement any extra Python nodes inside `src/crane_builder/crane_builder/` and
+add supporting resources as needed within the package. New interface definitions
+should live in `src/crane_interfaces` beside `PanelTask.msg`.
 
 ### Using the packages inside another workspace
 
@@ -69,15 +67,13 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
 - `crane_interfaces`: defines the `PanelTask` message that carries only the
   required information (`ifc_guid`, `hook_point`, `panel_position`,
   `target_position`, and `next_ifc_guid`).
-- `crane_builder`: provides two Python nodes for sequencing panel moves:
-  - `panel_chain_executor` reads a YAML description of your wall or column
-    panels and publishes `PanelTask` messages in strict NEXT-chain order.
-  - `neo4j_panel_chain_executor` queries a Neo4j database for panels hosted on
-    a specific level's walls or columns, using each panel's `ifcGuid`,
-    `HookPoint`, `PanelPosition`, and `TargetPosition` fields to publish the
-    NEXT-chain defined in Neo4j.
-  Both nodes publish on the `panel_task` topic and assume an identity
-  orientation for every pick and place (no rotation is applied).
+- `crane_builder`: provides the Neo4j-backed Python node that sequences panel
+  moves. The `neo4j_panel_chain_executor` queries a Neo4j database for panels
+  hosted on a specific level's walls or columns, using each panel's
+  `ifcGuid`, `HookPoint`, `PanelPosition`, and `TargetPosition` fields to
+  publish the NEXT-chain defined in Neo4j. Every message goes to the
+  `panel_task` topic and assumes an identity orientation (no rotation is
+  applied).
 
 ## Usage
 
@@ -109,42 +105,13 @@ Run the commands from the root that owns the `src/` directory shown earlier. If
 `colcon` reports duplicate packages, remove or rename any other workspaces on
 disk that still contain these package folders so only one copy remains.
 
-### 2. Choose a panel source
+### 2. Stream panel tasks from Neo4j
 
-The crane builder can publish panel tasks from either a static YAML file or
-directly from Neo4j. Pick the option that matches your environment:
-
-#### Option A — YAML file (offline or ad-hoc testing)
-
-Edit `src/crane_builder/config/example_panels.yaml`, or create your own file in
-the same format, with one entry per panel. Each panel defines only the fields
-that the executor needs:
-
-- `ifc_guid`: unique identifier of the panel.
-- `hook_point`: `[x, y, z]` coordinates of the grab point provided by
-  `HookPoint`.
-- `panel_position`: `[x, y, z]` coordinates of the panel centre
-  (`PanelPosition`).
-- `target_position`: `[x, y, z]` placement location of the panel.
-- `next`: the IFC GUID of the next panel in the chain, or empty/`null` for the
-  final element.
-
-Launch the YAML executor once the file is ready:
-
-```bash
-ros2 run crane_builder panel_chain_executor \
-  --ros-args -p panel_chain_file:=/absolute/path/to/your_panels.yaml
-```
-
-This approach keeps everything local—handy when the Neo4j instance is
-unavailable or you are iterating on a new panel sequence by hand.
-
-#### Option B — Neo4j database (live model data)
-
-To stream panels straight from Neo4j, start the database-backed executor instead
-of the YAML node. It expects each `FormworkPanel` node to provide the same
-fields used above and to be linked in order through a `NEXT_*` relation (for
-example `NEXT_1`, `NEXT_2`, …). After the common setup, launch it with:
+Panel tasks always originate from Neo4j. The executor reads the active NEXT
+chain directly from the graph so you never need to maintain a parallel YAML
+representation. Ensure each `FormworkPanel` node exposes the required fields and
+links to the next element through a dedicated `NEXT_*` relation (for example
+`NEXT_1`, `NEXT_2`, …). After the common setup, launch the executor with:
 
 ```bash
 ros2 run crane_builder neo4j_panel_chain_executor
@@ -163,14 +130,13 @@ ros2 run crane_builder neo4j_panel_chain_executor \
     -p chain_relation:=NEXT_5
 ```
 
-The Neo4j executor exists so you do **not** need to maintain a YAML file once
-the data is reliable in the graph—use whichever source best matches your
-workflow.
+The Neo4j executor is now the sole source of panel tasks, keeping the workspace
+aligned with the production graph data.
 
 ### 3. Run the RCAN executor
 
 After sourcing the workspace overlay you can start the RCAN executor to observe
-incoming panel tasks from either source:
+incoming panel tasks streamed from Neo4j:
 
 ```bash
 ros2 run rcan_executor rcan_executor

@@ -9,7 +9,6 @@ setup(
     data_files=[
         ('share/ament_index/resource_index/packages', ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
-        ('share/' + package_name + '/config', ['config/example_panels.yaml']),
     ],
     install_requires=['setuptools', 'neo4j'],
     zip_safe=True,
@@ -20,7 +19,6 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'panel_chain_executor = crane_builder.panel_chain_executor:main',
             'neo4j_panel_chain_executor = crane_builder.neo4j_panel_chain_executor:main',
         ],
     },

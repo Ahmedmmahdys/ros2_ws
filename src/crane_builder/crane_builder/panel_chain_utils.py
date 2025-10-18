@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Mapping, MutableSet, Optional, Tuple
+from typing import Iterable, Mapping, Optional, Tuple
 
 from geometry_msgs.msg import Point
 
@@ -20,7 +20,7 @@ class PanelLink:
 
 
 def point_from_value(value: object, *, field_name: str) -> Point:
-    """Convert a Neo4j/YAML value into a ROS ``Point`` message.
+    """Convert a Neo4j-provided value into a ROS ``Point`` message.
 
     Parameters
     ----------
@@ -66,19 +66,3 @@ def point_from_value(value: object, *, field_name: str) -> Point:
     point = Point()
     point.x, point.y, point.z = xyz
     return point
-
-
-def resolve_head(panels: Mapping[str, PanelLink]) -> str:
-    """Return the IFC GUID that starts the NEXT chain."""
-
-    referenced: MutableSet[str] = set()
-    for link in panels.values():
-        if link.next_ifc_guid:
-            referenced.add(link.next_ifc_guid)
-
-    heads = set(panels.keys()) - referenced
-    if len(heads) != 1:
-        raise ValueError(
-            "The panel chain must contain exactly one starting element (one GUID not referenced as a 'next')."
-        )
-    return heads.pop()

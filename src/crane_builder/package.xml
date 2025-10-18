@@ -11,7 +11,6 @@
   <depend>rclpy</depend>
   <depend>geometry_msgs</depend>
   <depend>crane_interfaces</depend>
-  <depend>ament_index_python</depend>
   <exec_depend>python3-neo4j</exec_depend>
 
   <test_depend>ament_cmake_pytest</test_depend>
