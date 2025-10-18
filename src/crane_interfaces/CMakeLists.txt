@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.8)
 project(crane_interfaces)
 
-option(CATKIN_INSTALL_INTO_PREFIX_ROOT
-  "Compatibility placeholder for catkin workspaces. Ignored in ROS 2 builds." OFF)
-option(CATKIN_SYMLINK_INSTALL
-  "Compatibility placeholder for catkin workspaces. Ignored in ROS 2 builds." OFF)
-mark_as_advanced(CATKIN_INSTALL_INTO_PREFIX_ROOT CATKIN_SYMLINK_INSTALL)
+if(DEFINED CATKIN_INSTALL_INTO_PREFIX_ROOT OR DEFINED CATKIN_SYMLINK_INSTALL)
+  message(FATAL_ERROR
+    "catkin-specific cache entries detected. crane_interfaces targets ROS 2 (ament); "
+    "please remove CATKIN_* variables before building.")
+endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
