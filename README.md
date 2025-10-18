@@ -109,7 +109,7 @@ expressed in metres within a single world frame (typically `map`).
    ```
 3. Build the workspace:
    ```bash
-   colcon build --symlink-install
+   colcon build --symlink-install --base-paths src
    source install/setup.bash
    ```
 4. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
@@ -130,6 +130,20 @@ expressed in metres within a single world frame (typically `map`).
 The node publishes each `PanelTask` sequentially, allowing your crane control
 stack to consume the topic and execute the pick-and-place motions without any
 additional parameters or orientation handling.
+
+## Troubleshooting
+
+- **"Duplicate package names not supported" during `colcon build`:** This
+  happens when `colcon` discovers multiple copies of the same package across the
+  search paths. Run the build from the repository root and explicitly scope the
+  search to this workspace with `colcon build --symlink-install --base-paths src`.
+  If the error persists, remove or rename any extra workspaces that contain
+  copies of `crane_builder`, `crane_interfaces`, `rcan_executor`, or
+  `rcan_bringup` so only one instance of each package remains on your machine.
+- **`source install/setup.bash` fails because the file does not exist:** The
+  `install/` directory is created during a successful `colcon build`. Re-run the
+  build (after fixing any reported errors) and then source the file from the
+  workspace root.
 
 ### Neo4j-driven execution
 
