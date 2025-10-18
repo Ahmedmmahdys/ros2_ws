@@ -81,50 +81,96 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
 
 ## Usage
 
-1. Source your ROS 2 Humble environment (skip if your shell already sources it):
-   ```bash
-   source /opt/ros/humble/setup.bash
-   ```
-2. Install the Python dependencies (only required once, normally handled by
-   `rosdep`; included here for clarity when running inside a fresh workspace):
-   ```bash
-   pip install --user neo4j
-   ```
-3. Build the workspace (if you previously built another copy of these packages,
-   remove the old build artifacts first by deleting the `build/`, `install/`,
-   and `log/` directories inside that workspace):
-   ```bash
-   rm -rf build install log  # optional: only if you're cleaning an old build
-   colcon build --symlink-install
-   source install/setup.bash
-   ```
-   Make sure you are running these commands from the workspace root that owns
-   the `src/` directory shown above; if `colcon` reports duplicate packages it
-   means another workspace on disk still contains the same package folders and
-   needs to be cleaned up or removed.
-4. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
-   so that it contains one entry per panel with the following keys only:
-   - `ifc_guid`: unique identifier of the panel.
-   - `hook_point`: `[x, y, z]` coordinates of the grab point provided by
-     `HookPoint`.
-   - `panel_position`: `[x, y, z]` coordinates of the panel centre (`PanelPosition`).
-   - `target_position`: `[x, y, z]` placement location of the panel.
-   - `next`: the IFC GUID of the next panel in the chain, or empty/`null` for the
-     final element.
-5. Launch the YAML-based executor:
-   ```bash
-   ros2 run crane_builder panel_chain_executor \
-     --ros-args -p panel_chain_file:=/absolute/path/to/your_panels.yaml
-   ```
+### 1. Common ROS 2 Humble setup
 
-The node publishes each `PanelTask` sequentially, allowing your crane control
-stack to consume the topic and execute the pick-and-place motions without any
-additional parameters or orientation handling.
+All packages target ROS 2 Humble APIs. Start every new shell session by sourcing
+your Humble installation:
 
-### Running the RCAN executor
+```bash
+source /opt/ros/humble/setup.bash
+```
 
-After sourcing the workspace overlay you can start the RCAN executor directly
-to observe the incoming panel tasks:
+Install the single Python dependency once (normally handled by `rosdep`):
+
+```bash
+pip install --user neo4j
+```
+
+Build the workspace from the repository root. If you previously built another
+copy of these packages in the same workspace, clear the old artifacts first:
+
+```bash
+rm -rf build install log  # optional: only if you're cleaning an old build
+colcon build --symlink-install
+source install/setup.bash
+```
+
+Run the commands from the root that owns the `src/` directory shown earlier. If
+`colcon` reports duplicate packages, remove or rename any other workspaces on
+disk that still contain these package folders so only one copy remains.
+
+### 2. Choose a panel source
+
+The crane builder can publish panel tasks from either a static YAML file or
+directly from Neo4j. Pick the option that matches your environment:
+
+#### Option A — YAML file (offline or ad-hoc testing)
+
+Edit `src/crane_builder/config/example_panels.yaml`, or create your own file in
+the same format, with one entry per panel. Each panel defines only the fields
+that the executor needs:
+
+- `ifc_guid`: unique identifier of the panel.
+- `hook_point`: `[x, y, z]` coordinates of the grab point provided by
+  `HookPoint`.
+- `panel_position`: `[x, y, z]` coordinates of the panel centre
+  (`PanelPosition`).
+- `target_position`: `[x, y, z]` placement location of the panel.
+- `next`: the IFC GUID of the next panel in the chain, or empty/`null` for the
+  final element.
+
+Launch the YAML executor once the file is ready:
+
+```bash
+ros2 run crane_builder panel_chain_executor \
+  --ros-args -p panel_chain_file:=/absolute/path/to/your_panels.yaml
+```
+
+This approach keeps everything local—handy when the Neo4j instance is
+unavailable or you are iterating on a new panel sequence by hand.
+
+#### Option B — Neo4j database (live model data)
+
+To stream panels straight from Neo4j, start the database-backed executor instead
+of the YAML node. It expects each `FormworkPanel` node to provide the same
+fields used above and to be linked in order through a `NEXT_*` relation (for
+example `NEXT_1`, `NEXT_2`, …). After the common setup, launch it with:
+
+```bash
+ros2 run crane_builder neo4j_panel_chain_executor
+```
+
+Override connection settings or select a different chain at the command line as
+needed:
+
+```bash
+ros2 run crane_builder neo4j_panel_chain_executor \
+  --ros-args \
+    -p uri:=neo4j+s://ae1083a1.databases.neo4j.io \
+    -p user:=neo4j \
+    -p password:=<your-password> \
+    -p database:=neo4j \
+    -p chain_relation:=NEXT_5
+```
+
+The Neo4j executor exists so you do **not** need to maintain a YAML file once
+the data is reliable in the graph—use whichever source best matches your
+workflow.
+
+### 3. Run the RCAN executor
+
+After sourcing the workspace overlay you can start the RCAN executor to observe
+incoming panel tasks from either source:
 
 ```bash
 ros2 run rcan_executor rcan_executor
@@ -136,12 +182,6 @@ The node subscribes to the `panel_task` topic by default. Use the
 ```bash
 ros2 run rcan_executor rcan_executor --ros-args -p panel_task_topic:=/my_topic
 ```
-
-### Neo4j-driven execution
-
-To source the panel information directly from Neo4j instead of a YAML file,
-launch the Neo4j executor (after completing steps 1–3 above). The node expects
-every panel node (labelled `FormworkPanel` in the Aura dataset) to provide:
 
 - `ifcGuid`: unique identifier of the panel.
 - `HookPoint`: pick location (the hook/grab point) as either `[x, y, z]` or a
