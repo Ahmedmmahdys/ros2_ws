@@ -1,21 +1,18 @@
 <?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>rcan_executor</name>
   <version>0.1.0</version>
-  <description>RCAN task executor that sequences crane operations from panel tasks.</description>
-  <maintainer email="example@example.com">Example Maintainer</maintainer>
-  <license>MIT</license>
+  <description>Initial RCAN executor node that reports incoming panel tasks.</description>
+  <maintainer email="example@example.com">OpenAI</maintainer>
+  <license>Apache License 2.0</license>
 
-  <buildtool_depend>ament_python</buildtool_depend>
+  <buildtool_depend>ament_cmake</buildtool_depend>
 
-  <depend>rclpy</depend>
-  <depend>geometry_msgs</depend>
-  <depend>builtin_interfaces</depend>
-  <depend>crane_interfaces</depend>
+  <exec_depend>ament_python</exec_depend>
+  <exec_depend>crane_interfaces</exec_depend>
+  <exec_depend>rclpy</exec_depend>
 
-  <test_depend>ament_cmake_pytest</test_depend>
-
-  <export>
-    <build_type>ament_python</build_type>
-  </export>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
 </package>

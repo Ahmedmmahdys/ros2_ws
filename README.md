@@ -79,23 +79,6 @@ to live under `~/ros2_ws/src/`, you have two equivalent options:
   Both nodes publish on the `panel_task` topic and assume an identity
   orientation for every pick and place (no rotation is applied).
 
-## Data contract
-
-Each panel task must include only the minimal information needed to pick and
-place a panel:
-
-- `ifcGuid`: globally unique identifier of the panel.
-- `HookPoint`: pick location (the crane attaches to this pose).
-- `TargetPosition`: placement location for the panel.
-- `NEXT_*`: exactly one NEXT edge (for example `NEXT_1` … `NEXT_26`) that links
-  the panel to the following panel on the same wall or column.
-
-`HookPoint` is always the pick reference and `TargetPosition` is always the
-placement reference—there is no fallback to the panel centre (`PanelPosition`).
-NEXT chains are **host-scoped**: each wall or column exposes its own chain and
-must be executed independently with no cross-host jumps. All coordinates are
-expressed in metres within a single world frame (typically `map`).
-
 ## Usage
 
 1. Source your ROS 2 Humble environment (skip if your shell already sources it):
@@ -109,7 +92,7 @@ expressed in metres within a single world frame (typically `map`).
    ```
 3. Build the workspace:
    ```bash
-   colcon build --symlink-install --base-paths src
+   colcon build --symlink-install
    source install/setup.bash
    ```
 4. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
@@ -130,20 +113,6 @@ expressed in metres within a single world frame (typically `map`).
 The node publishes each `PanelTask` sequentially, allowing your crane control
 stack to consume the topic and execute the pick-and-place motions without any
 additional parameters or orientation handling.
-
-## Troubleshooting
-
-- **"Duplicate package names not supported" during `colcon build`:** This
-  happens when `colcon` discovers multiple copies of the same package across the
-  search paths. Run the build from the repository root and explicitly scope the
-  search to this workspace with `colcon build --symlink-install --base-paths src`.
-  If the error persists, remove or rename any extra workspaces that contain
-  copies of `crane_builder`, `crane_interfaces`, `rcan_executor`, or
-  `rcan_bringup` so only one instance of each package remains on your machine.
-- **`source install/setup.bash` fails because the file does not exist:** The
-  `install/` directory is created during a successful `colcon build`. Re-run the
-  build (after fixing any reported errors) and then source the file from the
-  workspace root.
 
 ### Neo4j-driven execution
 
@@ -187,13 +156,3 @@ following each chain from its head node to the tail node. Every link is
 published in order: the `hook_point` of the outgoing `PanelTask` message
 matches Neo4j's `HookPoint`, while `panel_position` mirrors `PanelPosition` so
 your crane has access to both the grab location and the panel centre.
-
-## Gazebo & SDF conventions
-
-When simulating the RCAN workflow in Gazebo, ensure each panel's SDF model is
-stored under a GUID-named folder (for example `models/<ifc_guid>/model.sdf`) and
-set `GZ_SIM_RESOURCE_PATH` (Gazebo Fortress) or `GAZEBO_MODEL_PATH` (Gazebo
-Classic) to the root directory containing those models. Runtime attach and
-release corresponds to creating or destroying a fixed joint between
-`crane::hook_link` and `<ifc_guid>::body::grasp`. Keep model names unique across
-the simulation to avoid accidental re-use of meshes or joints.

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import math
 import re
 
 from typing import Dict, List, Optional, Tuple
@@ -27,20 +26,11 @@ class Neo4jPanelChainExecutor(Node):
         self.declare_parameter("database", "")
         self.declare_parameter("chain_relation", "NEXT_1")
         self.declare_parameter("publish_period", 1.0)
-        self.declare_parameter("frame_id", "map")
-        self.declare_parameter("host_selector", "")
 
         uri = self.get_parameter("uri").get_parameter_value().string_value
         user = self.get_parameter("user").get_parameter_value().string_value
         password = self.get_parameter("password").get_parameter_value().string_value
         database = self.get_parameter("database").get_parameter_value().string_value or None
-        self._frame_id = (
-            self.get_parameter("frame_id").get_parameter_value().string_value
-        )
-        host_selector_param = (
-            self.get_parameter("host_selector").get_parameter_value().string_value.strip()
-        )
-        host_filter = host_selector_param or None
 
         relation_param = (
             self.get_parameter("chain_relation").get_parameter_value().string_value.strip()
@@ -67,12 +57,8 @@ class Neo4jPanelChainExecutor(Node):
             raise
 
         try:
-            (
-                self._panels,
-                self._sequence_order,
-                self._host_guid,
-            ) = self._load_panel_chain(
-                relation_name, database, host_filter
+            self._panels, self._sequence_order = self._load_panel_chain(
+                relation_name, database
             )
         except Exception as exc:  # noqa: BLE001
             self.get_logger().error(f"Failed to load panel chain from Neo4j: {exc}")
@@ -80,17 +66,15 @@ class Neo4jPanelChainExecutor(Node):
             raise
 
         self._relation = relation_name
-        self._host_selector = host_filter
         self._next_index = 0
 
-        self._publisher = self.create_publisher(PanelTask, "/panel_task", 10)
+        self._publisher = self.create_publisher(PanelTask, "panel_task", 10)
         self._timer = self.create_timer(period, self._publish_next)
 
         ordered_ifc_guids = ", ".join(self._sequence_order)
-        host_detail = self._host_guid or "<unknown>"
         self.get_logger().info(
-            "Loaded %d panels from Neo4j using relation '%s' (host %s). Publishing to '/panel_task' with identity orientation. Order: %s"
-            % (len(self._sequence_order), self._relation, host_detail, ordered_ifc_guids)
+            "Loaded %d panels from Neo4j using relation '%s'. Publishing to 'panel_task' with identity orientation. Order: %s"
+            % (len(self._sequence_order), self._relation, ordered_ifc_guids)
         )
 
     def _normalise_relation_name(self, relation: str) -> str:
@@ -108,8 +92,8 @@ class Neo4jPanelChainExecutor(Node):
         return candidate
 
     def _load_panel_chain(
-        self, relation: str, database: Optional[str], host_filter: Optional[str]
-    ) -> Tuple[Dict[str, PanelLink], List[str], Optional[str]]:
+        self, relation: str, database: Optional[str]
+    ) -> Tuple[Dict[str, PanelLink], List[str]]:
         query = f"""
         MATCH (head:FormworkPanel)
         WHERE NOT ()-[:{relation}]->(head)
@@ -142,45 +126,13 @@ class Neo4jPanelChainExecutor(Node):
                 f"Neo4j returned no panels connected by relation '{relation}'. Verify the relation name and NEXT_* links."
             )
 
-        available_hosts = [
-            str(record.get("head_guid")).strip()
-            for record in records
-            if record.get("head_guid")
-        ]
-
-        selected_records = records
-        if host_filter:
-            selected_records = [
-                record
-                for record in records
-                if str(record.get("head_guid")).strip() == host_filter
-            ]
-            if not selected_records:
-                choices = ", ".join(h or "<unknown>" for h in available_hosts) or "<none>"
-                raise ValueError(
-                    "Host selector '%s' did not match any NEXT chain heads. Available hosts: %s"
-                    % (host_filter, choices)
-                )
-        elif len(records) > 1:
-            default_head = str(records[0].get("head_guid") or "").strip() or "<unknown>"
-            self.get_logger().info(
-                "Multiple NEXT chains detected for relation '%s'; defaulting to host %s. Provide host_selector to target a different chain.",
-                relation,
-                default_head,
-            )
-            selected_records = [records[0]]
-
         panels: Dict[str, PanelLink] = {}
         sequence_order: List[str] = []
-        selected_host: Optional[str] = None
 
-        for record in selected_records:
+        for record in records:
             chain_values = record.get("chain_id")
             panel_entries = record.get("panels")
             head_guid = record.get("head_guid")
-
-            if head_guid and selected_host is None:
-                selected_host = str(head_guid).strip() or None
 
             if not chain_values or not panel_entries:
                 raise ValueError(
@@ -232,7 +184,7 @@ class Neo4jPanelChainExecutor(Node):
         if not sequence_order:
             raise ValueError("No panels were assembled from Neo4j records.")
 
-        return panels, sequence_order, selected_host
+        return panels, sequence_order
 
     def _fetch_available_relations(self, session) -> List[str]:
         """Return the list of relationship types available in the database."""
@@ -262,13 +214,6 @@ class Neo4jPanelChainExecutor(Node):
         guid = self._sequence_order[self._next_index]
         link = self._panels[guid]
 
-        if not self._valid_point(link.hook_point) or not self._valid_point(link.target_position):
-            self.get_logger().error(
-                f"Skipping panel {guid} due to invalid hook or target coordinates."
-            )
-            self._next_index += 1
-            return
-
         message = PanelTask()
         message.ifc_guid = link.ifc_guid
         message.hook_point = link.hook_point
@@ -294,9 +239,6 @@ class Neo4jPanelChainExecutor(Node):
         if self._next_index >= len(self._sequence_order):
             self.get_logger().info("Panel chain complete; stopping publication timer.")
             self._timer.cancel()
-
-    def _valid_point(self, point) -> bool:
-        return all(math.isfinite(value) for value in (point.x, point.y, point.z))
 
     def destroy_node(self) -> bool:
         if hasattr(self, "_driver"):
