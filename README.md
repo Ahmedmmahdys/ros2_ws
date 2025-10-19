@@ -22,19 +22,65 @@ chain's `NEXT` linkage.
 
 ## Usage
 
-1. Build the workspace:
+### Build the workspace (all packages)
+
+1. Build the workspace and source the overlay:
    ```bash
+   cd /path/to/ros2_ws
    colcon build --symlink-install
    source install/setup.bash
    ```
-2. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
+
+### Run the RCAN demo orchestrator
+
+The RCAN orchestrator (`rcan_core`) wires together the in-process message broker,
+Neo4j-backed panel queries, template-based ROS node generation, and a simulated
+robot executor. To run the end-to-end demo without a real crane:
+
+1. Ensure your Neo4j instance contains panels with the `Panel` label and the
+   `ifcguid`, `HookPoint`, and `TargetPosition` properties required by the
+   database API (see `src/rcan_core/rcan_core/db_api.py` for details). If you do
+   not have a live database, the test fixture in
+   `src/rcan_core/tests/test_main_rcan.py` shows how to mock the driver.
+2. Export the Neo4j connection settings expected by `rcan_core.config`:
+   ```bash
+   export RCAN_NEO4J_URI=bolt://localhost:7687
+   export RCAN_NEO4J_USER=neo4j
+   export RCAN_NEO4J_PASSWORD=secret
+   ```
+3. (Optional) choose the panel GUID the demo should install:
+   ```bash
+   export RCAN_DEMO_IFCGUID=X1
+   ```
+4. Launch the orchestrator entry point:
+   ```bash
+   python -m rcan_core.main_rcan
+   ```
+
+On success the demo:
+
+- Requests a panel installation via the smart component API.
+- Generates a ROS node script in `src/rcan_nodes/rcan_nodes/generated/`.
+- Simulates the robot executing the task (via the generated node) and reports
+  the resulting panel state on the in-process broker.
+
+You can rerun the command with a different `RCAN_DEMO_IFCGUID` value to generate
+additional nodes; each run overwrites the panel's status in Neo4j through the
+state manager service.
+
+### YAML-based panel chain executors
+
+The original `crane_builder` package still provides two panel-chain executors.
+To use the YAML-driven node:
+
+1. Edit `src/crane_builder/config/example_panels.yaml` (or create your own file)
    so that it contains one entry per panel with the following keys only:
    - `ifc_guid`: unique identifier of the panel.
    - `panel_position`: `[x, y, z]` pick location of the panel.
    - `target_position`: `[x, y, z]` placement location of the panel.
    - `next`: the IFC GUID of the next panel in the chain, or empty/`null` for the
      final element.
-3. Launch the YAML-based executor:
+2. Launch the YAML-based executor:
    ```bash
    ros2 run crane_builder panel_chain_executor \
      --ros-args -p panel_chain_file:=/absolute/path/to/your_panels.yaml
@@ -44,9 +90,9 @@ The node publishes each `PanelTask` sequentially, allowing your crane control
 stack to consume the topic and execute the pick-and-place motions without any
 additional parameters or orientation handling.
 
-### Neo4j-driven execution
+### Neo4j-driven execution (legacy)
 
-To source the panel information directly from Neo4j instead of a YAML file,
+To source the panel information directly from Neo4j using the legacy node,
 launch the Neo4j executor. The node expects every panel node (label defaults to
 `Panel`) to provide:
 
@@ -56,22 +102,5 @@ launch the Neo4j executor. The node expects every panel node (label defaults to
 - `PanelPosition`: the panel's center location, used for logging.
 - `TargetPosition`: `[x, y, z]` placement location of the panel.
 - `SequenceIndex`: installation order number.
-- A `NEXT` relationship (configurable) linking each panel to the next one in
-  the chain.
-
-Example invocation:
-
-```bash
-ros2 run crane_builder neo4j_panel_chain_executor \
-  --ros-args \
-    -p uri:=bolt://neo4j.example.com:7687 \
-    -p user:=neo4j \
-    -p password:=secret \
-    -p panel_label:=Panel \
-    -p next_relationship:=NEXT
-```
-
-The executor orders the panels using `SequenceIndex`, verifies the declared
-`NEXT` chain matches that order, and publishes each `PanelTask` sequentially.
-The published `panel_position` corresponds to Neo4j's `HookPoint`, ensuring the
-pick uses the precise grab location provided by the database.
+- A `NEXT` relationship (configurable) linking each panel to the next one in the
+  chain.
