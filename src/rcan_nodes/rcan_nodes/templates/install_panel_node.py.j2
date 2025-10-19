@@ -1,0 +1,33 @@
+import json
+import rclpy
+from rclpy.node import Node
+from std_msgs.msg import String
+
+
+class InstallPanelNode(Node):
+    def __init__(self):
+        super().__init__('install_panel_{{ ifcguid }}')
+        self.pub = self.create_publisher(String, '/rcan/state', 10)
+        self.activity_id = '{{ activity_id }}'
+        self.ifcguid = '{{ ifcguid }}'
+        self.hook = {{ hook_pose }}
+        self.target = {{ target_pose }}
+
+    def run(self):
+        # TODO: call crane services here
+        msg = String()
+        msg.data = json.dumps({"activity_id": self.activity_id,
+                               "ifcguid": self.ifcguid,
+                               "status": "success"})
+        self.pub.publish(msg)
+
+
+def main():
+    rclpy.init()
+    node = InstallPanelNode()
+    node.run()
+    rclpy.shutdown()
+
+
+if __name__ == '__main__':
+    main()
