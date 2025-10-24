@@ -35,27 +35,43 @@ chain's `NEXT` linkage.
 
 The RCAN orchestrator (`rcan_core`) wires together the in-process message broker,
 Neo4j-backed panel queries, template-based ROS node generation, and a simulated
-robot executor. To run the end-to-end demo without a real crane:
+robot executor. The snippet below shows a full shell session that builds the
+workspace, configures Neo4j credentials, and launches the demo end to end:
+
+```bash
+cd /path/to/ros2_ws
+colcon build --symlink-install
+source install/setup.bash
+
+# Point the orchestrator at your Neo4j instance
+export RCAN_NEO4J_URI=bolt://localhost:7687
+export RCAN_NEO4J_USER=neo4j
+export RCAN_NEO4J_PASSWORD=secret
+
+# (Optional) choose the exact panel GUID to install
+export RCAN_DEMO_IFCGUID=X1
+
+# Run the end-to-end workflow
+python -m rcan_core.main_rcan
+```
+
+After the command finishes you will find the generated node under
+`src/rcan_nodes/rcan_nodes/generated/` (for example,
+`install_panel_X1.py`) and the panel state recorded back in Neo4j via the state
+manager service.
+
+For additional context, the ordered list below explains the prerequisites in
+more detail:
 
 1. Ensure your Neo4j instance contains panels with the `Panel` label and the
    `ifcguid`, `HookPoint`, and `TargetPosition` properties required by the
    database API (see `src/rcan_core/rcan_core/db_api.py` for details). If you do
    not have a live database, the test fixture in
    `src/rcan_core/tests/test_main_rcan.py` shows how to mock the driver.
-2. Export the Neo4j connection settings expected by `rcan_core.config`:
-   ```bash
-   export RCAN_NEO4J_URI=bolt://localhost:7687
-   export RCAN_NEO4J_USER=neo4j
-   export RCAN_NEO4J_PASSWORD=secret
-   ```
-3. (Optional) choose the panel GUID the demo should install:
-   ```bash
-   export RCAN_DEMO_IFCGUID=X1
-   ```
-4. Launch the orchestrator entry point:
-   ```bash
-   python -m rcan_core.main_rcan
-   ```
+2. Export the Neo4j connection settings expected by `rcan_core.config` (shown
+   in the snippet above).
+3. (Optional) set `RCAN_DEMO_IFCGUID` to force a specific panel.
+4. Launch the orchestrator entry point (`python -m rcan_core.main_rcan`).
 
 On success the demo:
 
