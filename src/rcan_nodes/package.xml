@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>rcan_nodes</name>
+  <version>0.1.0</version>
+  <description>RCAN generated ROS2 nodes for executing activities.</description>
+  <maintainer email="team@example.com">RCAN Team</maintainer>
+  <license>Apache License 2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+</package>
