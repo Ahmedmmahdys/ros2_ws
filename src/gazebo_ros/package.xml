@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>gazebo_ros</name>
+  <version>0.0.0</version>
+  <description>Stub gazebo_ros package to satisfy build dependencies.</description>
+  <maintainer email="maintainer@example.com">Placeholder Maintainer</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+</package>
