@@ -17,16 +17,38 @@ from .models import Panel, Vec3
 
 LOGGER = logging.getLogger(__name__)
 
-_PANEL_RETURN = "RETURN p.ifcguid AS ifcguid, p.HookPoint AS hook, p.TargetPosition AS target, p.date AS date;"
+def _panel_return(alias: str) -> str:
+    return (
+        f"{alias}.ifcguid AS ifcguid, "
+        f"{alias}.HookPoint AS hook, "
+        f"{alias}.TargetPosition AS target, "
+        f"{alias}.date AS date"
+    )
+
+
 _FETCH_PANEL_BY_GUID = (
     "MATCH (p:Panel {ifcguid:$ifcguid})\n"
-    f"{_PANEL_RETURN}"
+    "RETURN "
+    f"{_panel_return('p')}"
+    ";"
 )
 _FETCH_NEXT_READY_PANEL = (
-    "MATCH (h:Host {id:$host_id})-[:HAS_PANEL]->(p:Panel)\n"
-    "WHERE coalesce(p.state,'') <> 'Installed'\n"
-    "WITH p ORDER BY coalesce(p.sequence_index,0) ASC LIMIT 1\n"
-    f"{_PANEL_RETURN}"
+    "MATCH (h:Host {id:$host_id})-[:HAS_PANEL]->(start:Panel)\n"
+    "WHERE NOT ((start)<-[:NEXT]-(:Panel))\n"
+    "CALL {\n"
+    "    WITH start\n"
+    "    MATCH path = (start)-[:NEXT*0..]->(candidate:Panel)\n"
+    "    WHERE coalesce(candidate.state,'') <> 'Installed'\n"
+    "    RETURN candidate, length(path) AS depth\n"
+    "    ORDER BY depth ASC\n"
+    "    LIMIT 1\n"
+    "}\n"
+    "WITH candidate AS p, depth\n"
+    "RETURN "
+    f"{_panel_return('p')}"
+    ", depth\n"
+    "ORDER BY depth ASC\n"
+    "LIMIT 1;"
 )
 _MARK_PANEL_STATE = (
     "MATCH (p:Panel {ifcguid:$ifcguid}) SET p.state = $state;"
@@ -94,8 +116,9 @@ def get_panel_by_guid(ifcguid: str) -> Panel:
 
 
 def get_next_ready_panel(host_id: Optional[str]) -> Panel:
-    params = {"host_id": host_id} if host_id is not None else {"host_id": config.ROBOT_NAME}
-    record = _run_single(_FETCH_NEXT_READY_PANEL, params)
+    if host_id is None:
+        raise LookupError("Host identifier is required to select the next ready panel")
+    record = _run_single(_FETCH_NEXT_READY_PANEL, {"host_id": host_id})
     if record is None:
         raise LookupError("No ready panel found")
     return _record_to_panel(record)

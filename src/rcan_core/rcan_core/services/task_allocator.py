@@ -5,7 +5,6 @@ import logging
 from typing import Dict, Optional
 
 from .. import msg_broker
-from .. import config as rcan_config
 from ..api import database_api
 from ..models import Panel
 
@@ -42,9 +41,10 @@ class TaskAllocator:
                 "ifcguid": panel.ifcguid,
                 "hook_pose": list(panel.hook),
                 "target_pose": list(panel.target),
-            },
-            "host_id": host_id or rcan_config.ROBOT_NAME,
+            }
         }
+        if host_id is not None:
+            message["host_id"] = host_id
         if panel.date is not None:
             message["panel"]["date"] = panel.date
         msg_broker.publish(READY_TOPIC, message)
