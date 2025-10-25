@@ -41,9 +41,12 @@ class TaskAllocator:
                 "ifcguid": panel.ifcguid,
                 "hook_pose": list(panel.hook),
                 "target_pose": list(panel.target),
-            },
-            "host_id": host_id,
+            }
         }
+        if host_id is not None:
+            message["host_id"] = host_id
+        if panel.date is not None:
+            message["panel"]["date"] = panel.date
         msg_broker.publish(READY_TOPIC, message)
 
 

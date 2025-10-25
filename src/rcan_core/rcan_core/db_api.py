@@ -17,15 +17,45 @@ from .models import Panel, Vec3
 
 LOGGER = logging.getLogger(__name__)
 
+def _panel_return(alias: str) -> str:
+    return (
+        f"{alias}.ifcguid AS ifcguid, "
+        f"{alias}.HookPoint AS hook, "
+        f"{alias}.TargetPosition AS target, "
+        f"{alias}.date AS date"
+    )
+
+
 _FETCH_PANEL_BY_GUID = (
     "MATCH (p:Panel {ifcguid:$ifcguid})\n"
-    "RETURN p.ifcguid AS ifcguid, p.HookPoint AS hook, p.TargetPosition AS target;"
+    "RETURN "
+    f"{_panel_return('p')}"
+    ";"
 )
 _FETCH_NEXT_READY_PANEL = (
-    "MATCH (h:Host {id:$host_id})-[:HAS_PANEL]->(p:Panel)\n"
-    "WHERE coalesce(p.state,'') <> 'Installed'\n"
-    "WITH p ORDER BY coalesce(p.sequence_index,0) ASC LIMIT 1\n"
-    "RETURN p.ifcguid AS ifcguid, p.HookPoint AS hook, p.TargetPosition AS target;"
+    "MATCH (h:Host {id:$host_id})-[:HAS_PANEL]->(start:Panel)\n"
+    "WHERE NOT EXISTS { (:Panel)-[incoming]->(start) WHERE type(incoming) STARTS WITH 'NEXT_' }\n"
+    "CALL {\n"
+    "    WITH start\n"
+    "    MATCH path = (start)-[rels*0..]->(candidate:Panel)\n"
+    "    WHERE coalesce(candidate.state,'') <> 'Installed'\n"
+    "      AND all(rel IN rels WHERE type(rel) STARTS WITH 'NEXT_')\n"
+    "      AND CASE\n"
+    "            WHEN size(rels) = 0 THEN true\n"
+    "            ELSE all(idx IN range(0, size(rels) - 1) WHERE\n"
+    "                type(rels[idx]) = 'NEXT_' + toString(idx + 1)\n"
+    "            )\n"
+    "          END\n"
+    "    RETURN candidate, size(rels) AS depth\n"
+    "    ORDER BY depth ASC\n"
+    "    LIMIT 1\n"
+    "}\n"
+    "WITH candidate AS p, depth\n"
+    "RETURN "
+    f"{_panel_return('p')}"
+    ", depth\n"
+    "ORDER BY depth ASC\n"
+    "LIMIT 1;"
 )
 _MARK_PANEL_STATE = (
     "MATCH (p:Panel {ifcguid:$ifcguid}) SET p.state = $state;"
@@ -68,10 +98,13 @@ def _parse_vec3(value: Any) -> Vec3:
 
 
 def _record_to_panel(record: Dict[str, Any]) -> Panel:
+    date_value = record.get("date")
+    panel_date = str(date_value) if date_value is not None else None
     return Panel(
         ifcguid=str(record["ifcguid"]),
         hook=_parse_vec3(record["hook"]),
         target=_parse_vec3(record["target"]),
+        date=panel_date,
     )
 
 
@@ -90,8 +123,9 @@ def get_panel_by_guid(ifcguid: str) -> Panel:
 
 
 def get_next_ready_panel(host_id: Optional[str]) -> Panel:
-    params = {"host_id": host_id} if host_id is not None else {"host_id": config.ROBOT_NAME}
-    record = _run_single(_FETCH_NEXT_READY_PANEL, params)
+    if host_id is None:
+        raise LookupError("Host identifier is required to select the next ready panel")
+    record = _run_single(_FETCH_NEXT_READY_PANEL, {"host_id": host_id})
     if record is None:
         raise LookupError("No ready panel found")
     return _record_to_panel(record)
