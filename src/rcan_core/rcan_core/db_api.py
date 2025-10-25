@@ -17,15 +17,16 @@ from .models import Panel, Vec3
 
 LOGGER = logging.getLogger(__name__)
 
+_PANEL_RETURN = "RETURN p.ifcguid AS ifcguid, p.HookPoint AS hook, p.TargetPosition AS target, p.date AS date;"
 _FETCH_PANEL_BY_GUID = (
     "MATCH (p:Panel {ifcguid:$ifcguid})\n"
-    "RETURN p.ifcguid AS ifcguid, p.HookPoint AS hook, p.TargetPosition AS target;"
+    f"{_PANEL_RETURN}"
 )
 _FETCH_NEXT_READY_PANEL = (
     "MATCH (h:Host {id:$host_id})-[:HAS_PANEL]->(p:Panel)\n"
     "WHERE coalesce(p.state,'') <> 'Installed'\n"
     "WITH p ORDER BY coalesce(p.sequence_index,0) ASC LIMIT 1\n"
-    "RETURN p.ifcguid AS ifcguid, p.HookPoint AS hook, p.TargetPosition AS target;"
+    f"{_PANEL_RETURN}"
 )
 _MARK_PANEL_STATE = (
     "MATCH (p:Panel {ifcguid:$ifcguid}) SET p.state = $state;"
@@ -68,10 +69,13 @@ def _parse_vec3(value: Any) -> Vec3:
 
 
 def _record_to_panel(record: Dict[str, Any]) -> Panel:
+    date_value = record.get("date")
+    panel_date = str(date_value) if date_value is not None else None
     return Panel(
         ifcguid=str(record["ifcguid"]),
         hook=_parse_vec3(record["hook"]),
         target=_parse_vec3(record["target"]),
+        date=panel_date,
     )
 
 

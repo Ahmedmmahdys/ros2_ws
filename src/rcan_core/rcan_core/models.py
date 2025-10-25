@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, Tuple
+from typing import Dict, Optional, Tuple
 
 Vec3 = Tuple[float, float, float]
 
@@ -14,6 +14,7 @@ class Panel:
     ifcguid: str
     hook: Vec3
     target: Vec3
+    date: Optional[str] = None
 
 
 @dataclass(slots=True)
