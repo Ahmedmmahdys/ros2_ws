@@ -1,32 +1,127 @@
+"""Generated node that commands the crane stack to install a panel."""
+
+from __future__ import annotations
+
 import json
+from typing import Optional, Tuple, cast
+
 import rclpy
+from action_msgs.msg import GoalStatus
+from rclpy.action import ActionClient
 from rclpy.node import Node
 from std_msgs.msg import String
 
+from ros2_data.action import MoveXYZ
+
+Pose3D = Tuple[float, float, float]
+
 
 class InstallPanelNode(Node):
-    def __init__(self):
+    """Install a single panel using the crane MoveXYZ action server."""
+
+    def __init__(self) -> None:
         super().__init__('install_panel_{{ ifcguid }}')
-        self.pub = self.create_publisher(String, '/rcan/state', 10)
+        self._state_pub = self.create_publisher(String, '/rcan/state', 10)
         self.activity_id = '{{ activity_id }}'
         self.ifcguid = '{{ ifcguid }}'
-        self.hook = {{ hook_pose }}
-        self.target = {{ target_pose }}
+        self.hook: Pose3D = cast(Pose3D, tuple({{ hook_pose }}))
+        self.target: Pose3D = cast(Pose3D, tuple({{ target_pose }}))
+        self._move_speed = float(self.declare_parameter('move_speed', 0.25).value)
+        self._move_client = ActionClient(self, MoveXYZ, 'MoveXYZ')
 
-    def run(self):
-        # TODO: call crane services here
+    def _publish_state(self, status: str, message: Optional[str] = None) -> None:
+        payload = {
+            'activity_id': self.activity_id,
+            'ifcguid': self.ifcguid,
+            'status': status,
+        }
+        if message:
+            payload['message'] = message
         msg = String()
-        msg.data = json.dumps({"activity_id": self.activity_id,
-                               "ifcguid": self.ifcguid,
-                               "status": "success"})
-        self.pub.publish(msg)
+        msg.data = json.dumps(payload)
+        self._state_pub.publish(msg)
+
+    def _wait_for_server(self) -> bool:
+        self.get_logger().info('Waiting for MoveXYZ action server...')
+        available = self._move_client.wait_for_server(timeout_sec=5.0)
+        if not available:
+            self.get_logger().error('MoveXYZ action server is not available')
+        return bool(available)
+
+    def _send_move_goal(self, pose: Pose3D, label: str) -> bool:
+        self.get_logger().info('Moving crane to %s pose: %s', label, pose)
+        goal = MoveXYZ.Goal()
+        goal.positionx, goal.positiony, goal.positionz = pose
+        goal.speed = self._move_speed
+
+        send_future = self._move_client.send_goal_async(goal)
+        rclpy.spin_until_future_complete(self, send_future)
+        goal_handle = send_future.result()
+
+        if goal_handle is None or not goal_handle.accepted:
+            self.get_logger().error('MoveXYZ goal to %s pose was rejected', label)
+            return False
+
+        result_future = goal_handle.get_result_async()
+        rclpy.spin_until_future_complete(self, result_future)
+        result = result_future.result()
+
+        if result is None:
+            self.get_logger().error('MoveXYZ result for %s pose was empty', label)
+            return False
+
+        result_status = GoalStatus.STATUS_SUCCEEDED
+        if result.status != result_status:
+            self.get_logger().error(
+                'MoveXYZ action for %s pose finished with status %s',
+                label,
+                result.status,
+            )
+            return False
+
+        move_result = result.result.result
+        if move_result != 'MoveXYZ:SUCCESS':
+            self.get_logger().error(
+                "MoveXYZ action for %s pose reported '%s'",
+                label,
+                move_result,
+            )
+            return False
+
+        self.get_logger().info('Reached %s pose successfully', label)
+        return True
+
+    def run(self) -> None:
+        success = True
+        detail: Optional[str] = None
+
+        try:
+            if not self._wait_for_server():
+                success = False
+                detail = 'MoveXYZ action server unavailable'
+            elif not self._send_move_goal(self.hook, 'hook'):
+                success = False
+                detail = 'Failed to reach hook pose'
+            elif not self._send_move_goal(self.target, 'target'):
+                success = False
+                detail = 'Failed to reach target pose'
+        except Exception as exc:  # pragma: no cover - runtime safety
+            success = False
+            detail = str(exc)
+            self.get_logger().exception('Unhandled error while installing panel %s', self.ifcguid)
+        finally:
+            status = 'success' if success else 'failed'
+            self._publish_state(status, detail)
 
 
-def main():
+def main() -> None:
     rclpy.init()
     node = InstallPanelNode()
-    node.run()
-    rclpy.shutdown()
+    try:
+        node.run()
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':
