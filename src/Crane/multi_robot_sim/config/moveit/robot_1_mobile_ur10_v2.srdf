@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+
+<robot name="ur10e" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="tf_prefix" default=""/>
+  <xacro:property name="tf_prefix" value="$(arg tf_prefix)"/>
+  
+  <!-- START ur10erobotiq  ur10erobotiq   ur10erobotiq START -->
+  <!-- START ur10erobotiq  ur10erobotiq   ur10erobotiq START -->
+
+  <group name="${tf_prefix}ur10e_arm">
+    <!-- <chain base_link="${tf_prefix}base_link" tip_link="${tf_prefix}vgripper"/> -->
+
+    <joint name="${tf_prefix}elbow_joint" />
+    <joint name="${tf_prefix}shoulder_lift_joint" />
+    <joint name="${tf_prefix}shoulder_pan_joint" />
+    <joint name="${tf_prefix}wrist_1_joint" />
+    <joint name="${tf_prefix}wrist_2_joint" />
+    <joint name="${tf_prefix}wrist_3_joint" />
+
+    <!--chain base_link="base_link" tip_link="EE_robotiq_2f85"/-->
+  </group>
+
+
+  <group_state group="${tf_prefix}ur10e_arm" name="${tf_prefix}safe">
+    <joint name="${tf_prefix}elbow_joint" value="−1.099" />
+    <joint name="${tf_prefix}shoulder_lift_joint" value="−0.25294" />
+    <joint name="${tf_prefix}shoulder_pan_joint" value="1.247794167" />
+    <joint name="${tf_prefix}wrist_1_joint" value="−1.0205" />
+    <joint name="${tf_prefix}wrist_2_joint" value="0.785" />
+    <joint name="${tf_prefix}wrist_3_joint" value="0" />
+  </group_state>
+
+  <group_state group="${tf_prefix}ur10e_arm" name="${tf_prefix}home">
+    <joint name="${tf_prefix}elbow_joint" value="0" />
+    <joint name="${tf_prefix}shoulder_lift_joint" value="-1.5707" />
+    <joint name="${tf_prefix}shoulder_pan_joint" value="0" />
+    <joint name="${tf_prefix}wrist_1_joint" value="0" />
+    <joint name="${tf_prefix}wrist_2_joint" value="0" />
+    <joint name="${tf_prefix}wrist_3_joint" value="0" />
+  </group_state>
+
+  <group_state group="${tf_prefix}ur10e_arm" name="${tf_prefix}up">
+    <joint name="${tf_prefix}elbow_joint" value="0" />
+    <joint name="${tf_prefix}shoulder_lift_joint" value="-1.5707" />
+    <joint name="${tf_prefix}shoulder_pan_joint" value="0" />
+    <joint name="${tf_prefix}wrist_1_joint" value="-1.5707" />
+    <joint name="${tf_prefix}wrist_2_joint" value="0" />
+    <joint name="${tf_prefix}wrist_3_joint" value="0" />
+  </group_state>
+
+  <disable_collisions link1="${tf_prefix}base_link" link2="${tf_prefix}base_link_inertia" reason="Adjacent" />
+  <disable_collisions link1="${tf_prefix}base_link_inertia" link2="${tf_prefix}shoulder_link" reason="Adjacent" />
+  <disable_collisions link1="${tf_prefix}tool0" link2="${tf_prefix}wrist_1_link" reason="Never" />
+  <disable_collisions link1="${tf_prefix}tool0" link2="${tf_prefix}wrist_2_link" reason="Never" />
+  <disable_collisions link1="${tf_prefix}tool0" link2="${tf_prefix}wrist_3_link" reason="Adjacent" />
+  <disable_collisions link1="${tf_prefix}forearm_link" link2="${tf_prefix}upper_arm_link" reason="Adjacent" />
+  <disable_collisions link1="${tf_prefix}forearm_link" link2="${tf_prefix}wrist_1_link" reason="Adjacent" />
+  <disable_collisions link1="${tf_prefix}shoulder_link" link2="${tf_prefix}upper_arm_link" reason="Adjacent" />
+  <disable_collisions link1="${tf_prefix}wrist_1_link" link2="${tf_prefix}wrist_2_link" reason="Adjacent" />
+  <disable_collisions link1="${tf_prefix}wrist_1_link" link2="${tf_prefix}wrist_3_link" reason="Never" />
+  <disable_collisions link1="${tf_prefix}wrist_2_link" link2="${tf_prefix}wrist_3_link" reason="Adjacent" />
+
+  <disable_collisions link1="${tf_prefix}vgripper" link2="${tf_prefix}upper_arm_link" reason="Default" />
+  <disable_collisions link1="${tf_prefix}vgripper" link2="${tf_prefix}forearm_link" reason="Default" />
+  <disable_collisions link1="${tf_prefix}vgripper" link2="${tf_prefix}wrist_1_link" reason="Default" />
+  <disable_collisions link1="${tf_prefix}vgripper" link2="${tf_prefix}wrist_2_link" reason="Default" />
+  <disable_collisions link1="${tf_prefix}vgripper" link2="${tf_prefix}wrist_3_link" reason="Default" />
+
+
+
+
+  <!-- END ur10erobotiq  ur10erobotiq   ur10erobotiq END -->
+  <!-- END ur10erobotiq  ur10erobotiq   ur10erobotiq END -->
+
+</robot>

@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot name="brick" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- allow overriding the link suffix -->
+  <xacro:arg name="link_name" default=""/>
+  <xacro:property name="link_name" value="$(arg link_name)"/>
+
+  <link name="brick_link${link_name}">
+    <!-- Pose/origin: URDF uses <origin> instead of <pose> -->
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <mesh>
+            <uri>file:///home/pourya/appdata/ros_2/ws_towercrane/src/multi_robot_sim/urdf/formwork_03.STL</uri>
+          </mesh>
+      </geometry>
+      <material name="Gazebo/Bricks">
+        <script>
+          <uri>file://media/materials/scripts/gazebo.material</uri>
+          <name>Gazebo/Bricks</name>
+        </script>
+      </material>
+    </visual>
+
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.12 0.06 0.035"/>
+      </geometry>
+      <!-- friction/contact in URDF must go into gazebo tags -->
+      <surface>
+        <friction>
+          <ode>
+            <mu>1.5</mu>
+            <mu2>1.5</mu2>
+          </ode>
+        </friction>
+        <contact>
+          <ode>
+            <kp>100000</kp>
+            <kd>100</kd>
+            <min_depth>0.01</min_depth>
+            <max_vel>0.005</max_vel>
+          </ode>
+        </contact>
+      </surface>
+    </collision>
+
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.5"/>
+      <inertia
+        ixx="0.00015" ixy="0.0" ixz="0.0"
+        iyy="0.00075" iyz="0.0"
+        izz="0.00085"/>
+    </inertial>
+  </link>
+
+  <!-- disable self-collision via Gazebo API tag -->
+  <gazebo reference="brick_link${link_name}">
+    <self_collide>false</self_collide>
+  </gazebo>
+
+</robot>

@@ -1,0 +1,69 @@
+trajectory_execution:
+  allowed_execution_duration_scaling: 1.2
+  allowed_goal_duration_margin: 0.5
+  allowed_start_tolerance: 0.01
+
+moveit_controller_manager: moveit_simple_controller_manager/MoveItSimpleControllerManager
+
+controller_names:
+  - robot_1/ur_controller
+  # - robot_1/robotiq_controller_LKJ
+  # - robot_1/robotiq_controller_RKJ
+  # - robot_1/robotiq_controller_LIKJ
+  # - robot_1/robotiq_controller_RIKJ
+  # - robot_1/robotiq_controller_LFTJ
+  # - robot_1/robotiq_controller_RFTJ
+
+robot_1/ur_controller:
+  action_ns: follow_joint_trajectory
+  type: FollowJointTrajectory
+  default: true
+  joints:
+    - robot_1_shoulder_pan_joint
+    - robot_1_shoulder_lift_joint
+    - robot_1_elbow_joint
+    - robot_1_wrist_1_joint
+    - robot_1_wrist_2_joint
+    - robot_1_wrist_3_joint
+
+# robot_1/robotiq_controller_LKJ:
+#   action_ns: gripper_cmd
+#   type: GripperCommand
+#   default: true
+#   joints:
+#     - robot_1_robotiq_85_left_knuckle_joint
+
+# robot_1/robotiq_controller_RKJ:
+#   action_ns: gripper_cmd
+#   type: GripperCommand
+#   default: true
+#   joints:
+#     - robot_1_robotiq_85_right_knuckle_joint
+
+# robot_1/robotiq_controller_LIKJ:
+#   action_ns: gripper_cmd
+#   type: GripperCommand
+#   default: true
+#   joints:
+#     - robot_1_robotiq_85_left_inner_knuckle_joint
+
+# robot_1/robotiq_controller_RIKJ:
+#   action_ns: gripper_cmd
+#   type: GripperCommand
+#   default: true
+#   joints:
+#     - robot_1_robotiq_85_right_inner_knuckle_joint
+
+# robot_1/robotiq_controller_LFTJ:
+#   action_ns: gripper_cmd
+#   type: GripperCommand
+#   default: true
+#   joints:
+#     - robot_1_robotiq_85_left_finger_tip_joint
+
+# robot_1/robotiq_controller_RFTJ:
+#   action_ns: gripper_cmd
+#   type: GripperCommand
+#   default: true
+#   joints:
+#     - robot_1_robotiq_85_right_finger_tip_joint

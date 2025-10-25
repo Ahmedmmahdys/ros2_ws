@@ -1,0 +1,123 @@
+robot_1:
+  controller_manager:
+    ros__parameters:
+      update_rate: 50 #Hz
+
+      # Controllers for robot_1
+      joint_state_broadcaster:
+        type: joint_state_broadcaster/JointStateBroadcaster
+
+      diff_drive_base_controller:
+        type: diff_drive_controller/DiffDriveController
+
+      ur_controller:
+        type: joint_trajectory_controller/JointTrajectoryController
+
+      # robotiq_controller_LKJ:
+      #   type: position_controllers/GripperActionController
+      # robotiq_controller_RKJ:
+      #   type: position_controllers/GripperActionController
+      # robotiq_controller_LIKJ:
+      #   type: position_controllers/GripperActionController
+      # robotiq_controller_RIKJ:
+      #   type: position_controllers/GripperActionController
+      # robotiq_controller_LFTJ:
+      #   type: position_controllers/GripperActionController
+      # robotiq_controller_RFTJ:
+      #   type: position_controllers/GripperActionController
+    
+  diff_drive_base_controller:
+    ros__parameters:
+      use_sim_time: True
+      left_wheel_names: ['robot_1_front_left_wheel_joint', 'robot_1_rear_left_wheel_joint']
+      right_wheel_names: ['robot_1_front_right_wheel_joint', 'robot_1_rear_right_wheel_joint']
+
+      wheel_separation: 1.11
+      wheels_per_side: 1  # actually 2, but both are controlled by 1 signal
+      wheel_radius: 0.3302
+
+      wheel_separation_multiplier: 1.875
+      left_wheel_radius_multiplier: 1.0
+      right_wheel_radius_multiplier: 1.0
+
+      publish_rate: 50.0
+      odom_frame_id: odom
+      base_frame_id: base_footprint
+      pose_covariance_diagonal : [0.001, 0.001, 0.0, 0.0, 0.0, 0.01]
+      twist_covariance_diagonal: [0.001, 0.0, 0.0, 0.0, 0.0, 0.01]
+
+      open_loop: false
+      enable_odom_tf: true
+
+      cmd_vel_timeout: 0.5
+      #publish_limited_velocity: true
+      use_stamped_vel: false
+      #velocity_rolling_window_size: 10
+
+      # Velocity and acceleration limits
+      # Whenever a min_* is unspecified, default to -max_*
+      linear.x.has_velocity_limits: true
+      linear.x.has_acceleration_limits: true
+      linear.x.has_jerk_limits: false
+      linear.x.max_velocity: 1.0
+      linear.x.min_velocity: -1.0
+      linear.x.max_acceleration: 1.0
+      linear.x.max_jerk: 0.0
+      linear.x.min_jerk: 0.0
+
+      angular.z.has_velocity_limits: true
+      angular.z.has_acceleration_limits: true
+      angular.z.has_jerk_limits: false
+      angular.z.max_velocity: 1.0
+      angular.z.min_velocity: -1.0
+      angular.z.max_acceleration: 1.0
+      angular.z.min_acceleration: -1.0
+      angular.z.max_jerk: 0.0
+      angular.z.min_jerk: 0.0
+
+
+  ur_controller:
+    ros__parameters:
+      joints:
+      - robot_1_shoulder_pan_joint
+      - robot_1_shoulder_lift_joint
+      - robot_1_elbow_joint
+      - robot_1_wrist_1_joint
+      - robot_1_wrist_2_joint
+      - robot_1_wrist_3_joint
+      command_interfaces:
+        - position
+      state_interfaces:
+        - position
+        - velocity
+      state_publish_rate: 100.0
+      action_monitor_rate: 20.0
+      allow_partial_joints_goal: false
+      constraints:
+        stopped_velocity_tolerance: 0.2
+        goal_time: 0.0
+        robot_1_shoulder_pan_joint: { trajectory: 0.2, goal: 0.1 }
+        robot_1_shoulder_lift_joint: { trajectory: 0.2, goal: 0.1 }
+        robot_1_elbow_joint: { trajectory: 0.2, goal: 0.1 }
+        robot_1_wrist_1_joint: { trajectory: 0.2, goal: 0.1 }
+        robot_1_wrist_2_joint: { trajectory: 0.2, goal: 0.1 }
+        robot_1_wrist_3_joint: { trajectory: 0.2, goal: 0.1 }
+
+  # robotiq_controller_LKJ:
+  #   ros__parameters:
+  #     joint: robot_1_robotiq_85_left_knuckle_joint
+  # robotiq_controller_RKJ:
+  #   ros__parameters:
+  #     joint: robot_1_robotiq_85_right_knuckle_joint
+  # robotiq_controller_LIKJ:
+  #   ros__parameters:
+  #     joint: robot_1_robotiq_85_left_inner_knuckle_joint
+  # robotiq_controller_RIKJ:
+  #   ros__parameters:
+  #     joint: robot_1_robotiq_85_right_inner_knuckle_joint
+  # robotiq_controller_LFTJ:
+  #   ros__parameters:
+  #     joint: robot_1_robotiq_85_left_finger_tip_joint
+  # robotiq_controller_RFTJ:
+  #   ros__parameters:
+  #     joint: robot_1_robotiq_85_right_finger_tip_joint

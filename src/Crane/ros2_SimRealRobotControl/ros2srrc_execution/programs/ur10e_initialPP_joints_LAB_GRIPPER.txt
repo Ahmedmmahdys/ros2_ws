@@ -1,0 +1,10 @@
+{'action': 'MoveJ', 'value': {'joint1': -90.0, 'joint2': -90.0, 'joint3': -90.0, 'joint4': -90.0, 'joint5': 90.0, 'joint6': 0.0}, 'speed': 0.25}
+{'action': 'MoveJ', 'value': {'joint1': -139.0, 'joint2': -104.0, 'joint3': 144.0, 'joint4': -129.0, 'joint5': -90.0, 'joint6': 41.0}, 'speed': 0.25}
+{'action': 'MoveL', 'value': {'x': 0.00, 'y': 0.0, 'z': -0.12}, 'speed': 0.25}
+{'action': 'UR HandE - GripperClose'}
+{'action': 'MoveL', 'value': {'x': 0.0, 'y': 0.0, 'z': 0.12}, 'speed': 0.25}
+{'action': 'MoveJ', 'value': {'joint1': -189.0, 'joint2': -97.0, 'joint3': 138.0, 'joint4': -131.0, 'joint5': -90.0, 'joint6': -9.0}, 'speed': 0.25}
+{'action': 'MoveL', 'value': {'x': 0.0, 'y': 0.0, 'z': -0.12}, 'speed': 0.25}
+{'action': 'UR HandE - GripperOpen'}
+{'action': 'MoveL', 'value': {'x': 0.0, 'y':0.0, 'z': 0.12}, 'speed': 0.25}
+{'action': 'MoveJ', 'value': {'joint1': -90.0, 'joint2': -90.0, 'joint3': -90.0, 'joint4': -90.0, 'joint5': 90.0, 'joint6': 0.0}, 'speed': 0.25}

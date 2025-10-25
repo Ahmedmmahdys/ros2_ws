@@ -1,0 +1,1197 @@
+<?xml version="1.0" ?>
+<robot name="ur10e" xmlns:xacro="http://ros.org/wiki/xacro">
+  
+  <!-- PASS ARGUMENTS: -->
+  <xacro:arg name="kinematics_params" default="$(find multi_robot_sim)/config/ur10e_calibration.yaml"/>
+  <xacro:arg name="kinematics_params" default="$(find multi_robot_sim)/config/robot_1_joint_limits.yaml"/>
+
+  <xacro:property name="kinematics_params" value="$(arg kinematics_params)"/>
+  
+  <xacro:include filename="$(find multi_robot_sim)/urdf/ur10e_common.xacro" />
+  <xacro:ur10e_common kinematics_parameters_file="${kinematics_params}"/>
+  
+  <xacro:arg name="safety_limits" default="true"/>
+  <xacro:property name="safety_limits" value="$(arg safety_limits)"/>
+  <xacro:arg name="safety_pos_margin" default="0.15"/>
+  <xacro:property name="safety_pos_margin" value="$(arg safety_pos_margin)"/>
+  <xacro:arg name="safety_k_position" default="20"/>
+  <xacro:property name="safety_k_position" value="$(arg safety_k_position)"/>
+
+  <!-- Include materials -->
+  <xacro:include filename="$(find multi_robot_sim)/urdf/materials.xacro"/>
+
+  <!-- using a macro to calculate the inertia-->
+  <xacro:include filename="$(find multi_robot_sim)/urdf/inertial_calculate.xacro" />
+
+  <!-- Include trolly depth_camera-->
+  <xacro:include filename="$(find multi_robot_sim)/urdf/ur_depth_cam_v2.xacro"/>
+
+  <!-- Main agrs -->
+  <xacro:arg name="tf_prefix" default=""/>
+  <xacro:property name="tf_prefix" value="$(arg tf_prefix)"/>
+  <xacro:arg name="robot_name" default="robot_1"/>
+  <xacro:property name="robot_name" value="$(arg robot_name)"/>
+
+  <!-- Wheel Mounting Positions -->
+  <xacro:property name="xxwheelbase" value="1.024" />
+  <xacro:property name="xxtrack" value="1.11" />
+  <xacro:property name="xxwheel_vertical_offset" value="0.06564" />
+
+  <!-- Wheel Properties -->
+  <xacro:property name="xxwheel_length" value="0.2286" />
+  <xacro:property name="xxwheel_radius" value="0.3302" />
+
+  
+  <!-- START mobile robot START mobile robot START mobile robot-->
+  <!-- START mobile robot START mobile robot START mobile robot-->
+  <!-- START mobile robot START mobile robot START mobile robot-->
+
+    <link name="base_footprint"></link>
+    
+    <!-- chassis link -->
+    <joint name="chassis_joint" type="fixed"> 
+        <parent link="base_footprint"/>
+        <child link="chassis"/>
+        <origin xyz="0 0 0"/>
+        
+    </joint>
+    <link name="chassis">
+        <xacro:object_inertial width="0.9" length="1.2" height="0.45" mass="50">
+          <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/a200/base_link.stl" scale="2 2 2"/>
+                <!-- <box size="1.2 0.9 0.45"/> -->
+            </geometry>
+            <material name="white"/>
+        </visual>
+        <collision>
+            <origin xyz="0 0 0.22" rpy="0 0 0"/>
+            <geometry>
+                <box size="1.6 0.8 0.45"/>
+            </geometry>
+        </collision>
+    </link>
+
+    <!-- chassis link -->
+    <joint name="top_chassis_joint" type="fixed"> 
+        <parent link="chassis"/>
+        <child link="top_chassis"/>
+        <origin xyz="0 0 0"/>
+        
+    </joint>
+    <link name="top_chassis">
+        <xacro:object_inertial width="0.9" length="1.2" height="0.45" mass="50">
+          <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/a200/top_chassis.stl" scale="2 2 2"/>
+                <!-- <box size="1.2 0.9 0.45"/> -->
+            </geometry>
+            <material name="yellow"/>
+        </visual>
+    </link>
+
+    <!-- Front Left wheel Link -->
+    <joint name="${tf_prefix}front_left_wheel_joint" type="continuous"> 
+        <parent link="base_footprint"/>
+        <child link="front_left_wheel"/>
+        <origin xyz="${xxwheelbase/2} ${xxtrack/2} ${xxwheel_vertical_offset}" rpy="0 0 0" />
+        <axis xyz="0 1 0"/>
+    </joint>
+    <link name="front_left_wheel">
+        <xacro:object_inertial width="0.3" length="0.3" height="0.12" mass="10">
+          <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find clearpath_platform_description)/meshes/a200/wheel.dae" scale="2 2 2" />
+            <!-- <cylinder radius="0.15" length="0.12"/> -->
+          </geometry>
+          <material name="blue"/>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="1.570795 0 0" />
+            <geometry>
+                <cylinder radius="${xxwheel_radius}" length="${xxwheel_length}"/>
+            </geometry>
+        </collision>
+    </link>
+
+
+    <!-- Front Right wheel Link -->
+    <joint name="${tf_prefix}front_right_wheel_joint" type="continuous"> 
+        <parent link="base_footprint"/>
+        <child link="front_right_wheel"/>
+        <origin xyz="${xxwheelbase/2} ${-xxtrack/2} ${xxwheel_vertical_offset}" rpy="0 0 0" />
+        <axis xyz="0 1 0"/>
+    </joint>
+    <link name="front_right_wheel">
+        <xacro:object_inertial width="0.3" length="0.3" height="0.12" mass="10">
+          <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find clearpath_platform_description)/meshes/a200/wheel.dae" scale="2 2 2" />
+            <!-- <cylinder radius="0.15" length="0.12"/> -->
+          </geometry>
+          <material name="blue"/>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="1.570795 0 0" />
+            <geometry>
+                <cylinder radius="${xxwheel_radius}" length="${xxwheel_length}"/>
+            </geometry>
+        </collision>
+    </link>
+
+
+    <!-- Rear Left wheel Link -->
+    <joint name="${tf_prefix}rear_left_wheel_joint" type="continuous"> 
+        <parent link="base_footprint"/>
+        <child link="rear_left_wheel"/>
+        <origin xyz="${-xxwheelbase/2} ${xxtrack/2} ${xxwheel_vertical_offset}" rpy="0 0 0" />
+        <axis xyz="0 1 0"/>
+    </joint>
+    <link name="rear_left_wheel">
+        <xacro:object_inertial width="0.3" length="0.3" height="0.12" mass="10">
+          <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find clearpath_platform_description)/meshes/a200/wheel.dae" scale="2 2 2" />
+            <!-- <cylinder radius="0.15" length="0.12"/> -->
+          </geometry>
+          <material name="blue"/>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="1.570795 0 0" />
+            <geometry>
+                <cylinder radius="${xxwheel_radius}" length="${xxwheel_length}"/>
+            </geometry>
+        </collision>
+    </link>
+
+
+    <!-- Rear Right wheel Link -->
+    <joint name="${tf_prefix}rear_right_wheel_joint" type="continuous"> 
+        <parent link="base_footprint"/>
+        <child link="rear_right_wheel"/>
+        <origin xyz="${-xxwheelbase/2} ${-xxtrack/2} ${xxwheel_vertical_offset}" rpy="0 0 0" />
+        <axis xyz="0 1 0"/>
+    </joint>
+    <link name="rear_right_wheel">
+        <xacro:object_inertial width="0.3" length="0.3" height="0.12" mass="10">
+          <origin xyz="0 0 0" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find clearpath_platform_description)/meshes/a200/wheel.dae" scale="2 2 2" />
+            <!-- <cylinder radius="0.15" length="0.12"/> -->
+          </geometry>
+          <material name="blue"/>
+        </visual>
+        <collision>
+          <origin xyz="0 0 0" rpy="1.570795 0 0" />
+            <geometry>
+                <cylinder radius="${xxwheel_radius}" length="${xxwheel_length}"/>
+            </geometry>
+        </collision>
+    </link>
+  
+
+  <!-- END mobile robot END mobile robot END mobile robot-->
+  <!-- END mobile robot END mobile robot END mobile robot-->
+  <!-- END mobile robot END mobile robot END mobile robot-->
+    
+    <joint name="block-base" type="fixed">
+      <parent link="base_footprint" />
+      <child link = "${tf_prefix}base_link" />
+      <origin xyz="0.50 0 0.45" rpy="0 0 0" /> 
+    </joint>
+
+  <!-- START UR10e ROBOT START UR10e ROBOT START UR10e ROBOT-->
+  <!-- START UR10e ROBOT START UR10e ROBOT START UR10e ROBOT-->
+  <!-- START UR10e ROBOT START UR10e ROBOT START UR10e ROBOT-->
+
+  <!-- Links: -->
+    <link name="${tf_prefix}base_link"/>
+
+    <link name="${tf_prefix}base_link_inertia">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 ${pi}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/visual/base.dae"/>
+        </geometry>
+        <material name="LightGrey">
+          <color rgba="0.7 0.7 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 ${pi}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/collision/base.stl"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${base_inertia_radius}" length="${base_inertia_length}" mass="${base_mass}">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </xacro:cylinder_inertial>
+  </link>
+
+    <link name="${tf_prefix}shoulder_link">
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 ${pi}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/visual/shoulder.dae"/>
+        </geometry>
+        <material name="LightGrey">
+          <color rgba="0.7 0.7 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 ${pi}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/collision/shoulder.stl"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${shoulder_inertia_radius}" length="${shoulder_inertia_length}" mass="${shoulder_mass}">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </xacro:cylinder_inertial>
+  </link>
+
+    <link name="${tf_prefix}upper_arm_link">
+      <visual>
+        <origin xyz="0 0 ${shoulder_offset}" rpy="${pi/2} 0 ${-pi/2}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/visual/upperarm.dae"/>
+        </geometry>
+        <material name="LightGrey">
+          <color rgba="0.7 0.7 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${shoulder_offset}" rpy="${pi/2} 0 ${-pi/2}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/collision/upperarm.stl"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${upperarm_inertia_radius}" length="${upperarm_inertia_length}" mass="${upper_arm_mass}">
+        <origin xyz="${-0.5 * upperarm_inertia_length} 0.0 ${upper_arm_inertia_offset}" rpy="0 ${pi/2} 0" />
+      </xacro:cylinder_inertial>
+  </link>
+
+    <link name="${tf_prefix}forearm_link">
+      <visual>
+        <origin xyz="0 0 ${elbow_offset}" rpy="${pi/2} 0 ${-pi/2}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/visual/forearm.dae"/>
+        </geometry>
+        <material name="LightGrey">
+          <color rgba="0.7 0.7 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${elbow_offset}" rpy="${pi/2} 0 ${-pi/2}"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/collision/forearm.stl"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${forearm_inertia_radius}" length="${forearm_inertia_length}"  mass="${forearm_mass}">
+        <origin xyz="${-0.5 * forearm_inertia_length} 0.0 ${elbow_offset}" rpy="0 ${pi/2} 0" />
+      </xacro:cylinder_inertial>
+  </link>
+
+    <link name="${tf_prefix}wrist_1_link">
+      <visual>
+        <origin xyz="0 0 ${wrist_1_visual_offset}" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/visual/wrist1.dae"/>
+        </geometry>
+        <material name="LightGrey">
+          <color rgba="0.7 0.7 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${wrist_1_visual_offset}" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/collision/wrist1.stl"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${wrist_1_inertia_radius}" length="${wrist_1_inertia_length}"  mass="${wrist_1_mass}">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </xacro:cylinder_inertial>
+  </link>
+
+    <link name="${tf_prefix}wrist_2_link">
+      <visual>
+        <origin xyz="0 0 ${wrist_2_visual_offset}" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/visual/wrist2.dae"/>
+        </geometry>
+        <material name="LightGrey">
+          <color rgba="0.7 0.7 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${wrist_2_visual_offset}" rpy="0 0 0"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/collision/wrist2.stl"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${wrist_2_inertia_radius}" length="${wrist_2_inertia_length}"  mass="${wrist_2_mass}">
+        <origin xyz="0 0 0" rpy="0 0 0" />
+      </xacro:cylinder_inertial>
+  </link>
+
+  <link name="${tf_prefix}wrist_3_link">
+      <visual>
+        <origin xyz="0 0 ${wrist_3_visual_offset}" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/visual/wrist3.dae"/>
+        </geometry>
+        <material name="LightGrey">
+          <color rgba="0.7 0.7 0.7 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 ${wrist_3_visual_offset}" rpy="${pi/2} 0 0"/>
+        <geometry>
+          <mesh filename="file://$(find multi_robot_sim)/meshes/collision/wrist3.stl"/>
+        </geometry>
+      </collision>
+      <xacro:cylinder_inertial radius="${wrist_3_inertia_radius}" length="${wrist_3_inertia_length}"  mass="${wrist_3_mass}">
+        <origin xyz="0.0 0.0 ${-0.5 * wrist_3_inertia_length}" rpy="0 0 0" />
+      </xacro:cylinder_inertial>
+    </link>
+
+    <joint name="${tf_prefix}base_link-base_link_inertia" type="fixed">
+      <parent link="${tf_prefix}base_link" />
+      <child link="${tf_prefix}base_link_inertia" />
+      <!-- 'base_link' is REP-103 aligned (so X+ forward), while the internal
+           frames of the robot/controller have X+ pointing backwards.
+           Use the joint between 'base_link' and 'base_link_inertia' (a dummy
+           link/frame) to introduce the necessary rotation over Z (of pi rad).
+      -->
+      <origin xyz="0 0 0" rpy="0 0 ${pi}" />
+  </joint>
+
+    <joint name="${tf_prefix}shoulder_pan_joint" type="revolute">
+      <parent link="${tf_prefix}base_link_inertia" />
+      <child link="${tf_prefix}shoulder_link" />
+      <origin xyz="${shoulder_x} ${shoulder_y} ${shoulder_z}" rpy="${shoulder_roll} ${shoulder_pitch} ${shoulder_yaw}" />
+      <axis xyz="0 0 1" />
+      <limit lower="${shoulder_pan_lower_limit}" upper="${shoulder_pan_upper_limit}"
+        effort="${shoulder_pan_effort_limit}" velocity="${shoulder_pan_velocity_limit}"/>
+      <xacro:if value="${safety_limits}">
+         <safety_controller soft_lower_limit="${shoulder_pan_lower_limit + safety_pos_margin}" soft_upper_limit="${shoulder_pan_upper_limit - safety_pos_margin}" k_position="${safety_k_position}" k_velocity="0.0"/>
+      </xacro:if>
+      <dynamics damping="0" friction="0"/>
+  </joint>
+
+    <joint name="${tf_prefix}shoulder_lift_joint" type="revolute">
+      <parent link="${tf_prefix}shoulder_link" />
+      <child link="${tf_prefix}upper_arm_link" />
+      <origin xyz="${upper_arm_x} ${upper_arm_y} ${upper_arm_z}" rpy="${upper_arm_roll} ${upper_arm_pitch} ${upper_arm_yaw}" />
+      <axis xyz="0 0 1" />
+      <limit lower="${shoulder_lift_lower_limit}" upper="${shoulder_lift_upper_limit}"
+        effort="${shoulder_lift_effort_limit}" velocity="${shoulder_lift_velocity_limit}"/>
+      <xacro:if value="${safety_limits}">
+         <safety_controller soft_lower_limit="${shoulder_lift_lower_limit + safety_pos_margin}" soft_upper_limit="${shoulder_lift_upper_limit - safety_pos_margin}" k_position="${safety_k_position}" k_velocity="0.0"/>
+      </xacro:if>
+      <dynamics damping="0" friction="0"/>
+  </joint>
+
+    <joint name="${tf_prefix}elbow_joint" type="revolute">
+      <parent link="${tf_prefix}upper_arm_link" />
+      <child link="${tf_prefix}forearm_link" />
+      <origin xyz="${forearm_x} ${forearm_y} ${forearm_z}" rpy="${forearm_roll} ${forearm_pitch} ${forearm_yaw}" />
+      <axis xyz="0 0 1" />
+      <limit lower="${elbow_joint_lower_limit}" upper="${elbow_joint_upper_limit}"
+        effort="${elbow_joint_effort_limit}" velocity="${elbow_joint_velocity_limit}"/>
+      <xacro:if value="${safety_limits}">
+         <safety_controller soft_lower_limit="${elbow_joint_lower_limit + safety_pos_margin}" soft_upper_limit="${elbow_joint_upper_limit - safety_pos_margin}" k_position="${safety_k_position}" k_velocity="0.0"/>
+      </xacro:if>
+      <dynamics damping="0" friction="0"/>
+  </joint>
+
+    <joint name="${tf_prefix}wrist_1_joint" type="revolute">
+      <parent link="${tf_prefix}forearm_link" />
+      <child link="${tf_prefix}wrist_1_link" />
+      <origin xyz="${wrist_1_x} ${wrist_1_y} ${wrist_1_z}" rpy="${wrist_1_roll} ${wrist_1_pitch} ${wrist_1_yaw}" />
+      <axis xyz="0 0 1" />
+      <limit lower="${wrist_1_lower_limit}" upper="${wrist_1_upper_limit}"
+        effort="${wrist_1_effort_limit}" velocity="${wrist_1_velocity_limit}"/>
+      <xacro:if value="${safety_limits}">
+         <safety_controller soft_lower_limit="${wrist_1_lower_limit + safety_pos_margin}" soft_upper_limit="${wrist_1_upper_limit - safety_pos_margin}" k_position="${safety_k_position}" k_velocity="0.0"/>
+      </xacro:if>
+      <dynamics damping="0" friction="0"/>
+  </joint>
+
+    <joint name="${tf_prefix}wrist_2_joint" type="revolute">
+      <parent link="${tf_prefix}wrist_1_link" />
+      <child link="${tf_prefix}wrist_2_link" />
+      <origin xyz="${wrist_2_x} ${wrist_2_y} ${wrist_2_z}" rpy="${wrist_2_roll} ${wrist_2_pitch} ${wrist_2_yaw}" />
+      <axis xyz="0 0 1" />
+      <limit lower="${wrist_2_lower_limit}" upper="${wrist_2_upper_limit}"
+             effort="${wrist_2_effort_limit}" velocity="${wrist_2_velocity_limit}"/>
+      <xacro:if value="${safety_limits}">
+         <safety_controller soft_lower_limit="${wrist_2_lower_limit + safety_pos_margin}" soft_upper_limit="${wrist_2_upper_limit - safety_pos_margin}" k_position="${safety_k_position}" k_velocity="0.0"/>
+      </xacro:if>
+      <dynamics damping="0" friction="0"/>
+  </joint>
+
+    <joint name="${tf_prefix}wrist_3_joint" type="revolute">
+      <parent link="${tf_prefix}wrist_2_link" />
+      <child link="${tf_prefix}wrist_3_link" />
+      <origin xyz="${wrist_3_x} ${wrist_3_y} ${wrist_3_z}" rpy="${wrist_3_roll} ${wrist_3_pitch} ${wrist_3_yaw}" />
+      <axis xyz="0 0 1" />
+      <limit lower="${wrist_3_lower_limit}" upper="${wrist_3_upper_limit}"
+             effort="${wrist_3_effort_limit}" velocity="${wrist_3_velocity_limit}"/>
+      <xacro:if value="${safety_limits}">
+         <safety_controller soft_lower_limit="${wrist_3_lower_limit + safety_pos_margin}" soft_upper_limit="${wrist_3_upper_limit - safety_pos_margin}" k_position="${safety_k_position}" k_velocity="0.0"/>
+      </xacro:if>
+      <dynamics damping="0" friction="0"/>
+    </joint>
+
+    <link name="${tf_prefix}ft_frame"/>
+    <joint name="${tf_prefix}wrist_3_link-ft_frame" type="fixed">
+      <parent link="${tf_prefix}wrist_3_link"/>
+      <child link="${tf_prefix}ft_frame"/>
+      <origin xyz="0 0 0" rpy="${pi} 0 0"/>
+    </joint>
+
+    <!-- ROS-Industrial 'base' frame - base_link to UR 'Base' Coordinates transform -->
+    <link name="${tf_prefix}base"/>
+    <joint name="${tf_prefix}base_link-base_fixed_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="0 0 ${pi}"/>
+      <parent link="${tf_prefix}base_link"/>
+      <child link="${tf_prefix}base"/>
+    </joint>
+
+    <!-- ROS-Industrial 'flange' frame - attachment point for EEF models -->
+    <link name="${tf_prefix}flange" />
+    <joint name="${tf_prefix}wrist_3-flange" type="fixed">
+      <parent link="${tf_prefix}wrist_3_link" />
+      <child link="${tf_prefix}flange" />
+      <origin xyz="0 0 0" rpy="0 ${-pi/2.0} ${-pi/2.0}" />
+    </joint>
+
+    <!-- ROS-Industrial 'tool0' frame - all-zeros tool frame -->
+    <link name="${tf_prefix}tool0"/>
+    <joint name="${tf_prefix}flange-tool0" type="fixed">
+      <!-- default toolframe - X+ left, Y+ up, Z+ front -->
+      <origin xyz="0 0 0" rpy="${pi/2.0} 0 ${pi/2.0}"/>
+      <parent link="${tf_prefix}flange"/>
+      <child link="${tf_prefix}tool0"/>
+    </joint>
+
+    <!-- EXTRA LINK + JOINT for the base_link to appear in Gazebo and to be able to calculate TRANSFORMS: -->
+    <link name="${tf_prefix}BASE_TF">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.00001" />
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <box size= "0.00001 0.00001 0.00001" />
+        </geometry>
+      </visual>
+    </link>
+    <joint name="${tf_prefix}BASE_TF_joint" type="fixed" >
+      <parent link="${tf_prefix}base_link" />
+      <child link="${tf_prefix}BASE_TF" />
+      <limit effort="10000" lower="0.0" upper="0.0" velocity="0.0"/>
+      <axis xyz="1 0 0" />
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    </joint>
+
+    <!-- EXTRA LINK + JOINT for the TCP to appear in Gazebo and to be able to calculate TRANSFORMS: -->
+    <link name="${tf_prefix}TCP">
+      <inertial>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <mass value="0.00001" />
+        <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+      </inertial>
+      <visual>
+        <geometry>
+          <box size= "0.00001 0.00001 0.00001" />
+        </geometry>
+      </visual>
+    </link>
+    <joint name="${tf_prefix}TCP_joint" type="prismatic" >
+      <parent link="${tf_prefix}wrist_3_link" />
+      <child link="${tf_prefix}TCP" />
+      <limit effort="10000" lower="0.0" upper="0.0" velocity="0.0"/>
+      <axis xyz="1 0 0" />
+      <origin xyz="0.0 0.0 0.0" rpy="0 0 0"/>
+    </joint>
+
+  <!-- END mobile robot END mobile robot END mobile robot-->
+  <!-- END mobile robot END mobile robot END mobile robot-->
+  <!-- END mobile robot END mobile robot END mobile robot-->
+
+
+    <!-- =================================== -->
+    <!-- ========== END-EFFECTORS ========== -->
+
+      <!-- NOTE: JOINT LIMITS have been slightly augmentated from 0.0 to +-0.05 to avoid errors in MoveIt!2 execution. -->
+
+      <!-- Robotiq: coupler -->
+      <link name="${tf_prefix}robotiq_coupler">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/robotiq_85_coupler.stl" />
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/robotiq_85_coupler.stl" />
+          </geometry>
+        </collision>
+        <inertial>
+          <origin xyz="2.073e-05   1.45286e-03  -1.1049e-03" rpy="0 0 0" />
+          <mass value="0.168" />
+          <inertia ixx="6.69695624e-05" ixy="5.21511788e-09" ixz="-2.74383009e-08" 
+                  iyy="7.85088161e-05" iyz="5.41105193e-07" izz="1.41819717e-04"/>
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_coupler_joint" type="fixed">
+        <origin xyz="0 0 0.004" rpy="0 0 ${-pi/2.0}" />
+        <parent link="${tf_prefix}tool0"/>
+        <child link="${tf_prefix}robotiq_coupler"/>
+      </joint>
+
+      <gazebo reference="${tf_prefix}robotiq_coupler">
+        <mu1>0.9</mu1>
+        <mu2>0.9</mu2>
+        <material>Gazebo/FlatBlack</material>
+      </gazebo>
+
+      <!-- Robotiq: base_link -->
+      <link name="${tf_prefix}robotiq_85_base_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_base_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_base_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.636951" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000380" ixy = "0.000000" ixz = "0.000000"
+              iyx = "0.000000" iyy = "0.001110" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.001171" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_base_joint" type="fixed">
+        <origin xyz="0 0 0.004" rpy="0 ${-pi/2} ${pi}"/>
+        <parent link="${tf_prefix}robotiq_coupler"/>
+        <child link="${tf_prefix}robotiq_85_base_link"/>
+      </joint>
+
+      <!-- Robotiq: left_knuckle -->
+      <link name="${tf_prefix}robotiq_85_left_knuckle_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_knuckle_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_knuckle_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.027309" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000003" ixy = "-0.000002" ixz = "0.000000"
+              iyx = "-0.000002" iyy = "0.000021" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000020" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_left_knuckle_joint" type="revolute">
+	      <parent link="${tf_prefix}robotiq_85_base_link"/>
+	      <child link="${tf_prefix}robotiq_85_left_knuckle_link"/>
+	      <axis xyz="0 0 1"/>
+	      <origin rpy="${pi} 0.0 0.0" xyz="0.05490451627 0.03060114443 0.0"/>
+	      <limit lower="-0.05" upper="0.80285" velocity="0.5" effort="1000"/>
+        <dynamics damping="1.0" friction="1.0"/>
+	    </joint>
+
+      <!-- Robotiq: right_knuckle -->
+      <link name="${tf_prefix}robotiq_85_right_knuckle_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_knuckle_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_knuckle_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.027309" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000003" ixy = "-0.000002" ixz = "0.000000"
+              iyx = "-0.000002" iyy = "0.000021" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000020" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_right_knuckle_joint" type="continuous">
+        <parent link="${tf_prefix}robotiq_85_base_link"/>
+        <child link="${tf_prefix}robotiq_85_right_knuckle_link"/>
+        <axis xyz="0 0 1"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.05490451627 -0.03060114443 0.0"/>
+        <limit lower="-0.05" upper="0.80285" velocity="0.5" effort="1000"/>
+        <dynamics damping="1.0" friction="1.0"/>
+      </joint>
+
+      <!-- Robotiq: left_finger -->
+      <link name="${tf_prefix}robotiq_85_left_finger_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_finger_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_finger_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.027309" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000003" ixy = "-0.000002" ixz = "0.000000"
+              iyx = "-0.000002" iyy = "0.000021" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000020" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_left_finger_joint" type="fixed">
+        <parent link="${tf_prefix}robotiq_85_left_knuckle_link"/>
+        <child link="${tf_prefix}robotiq_85_left_finger_link"/>
+        <origin xyz="-0.00408552455 -0.03148604435 0.0" rpy="0 0 0" />
+        <dynamics damping="1.0" friction="1.0"/>
+      </joint>
+
+      <!-- Robotiq: right_finger -->
+      <link name="${tf_prefix}robotiq_85_right_finger_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_finger_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_finger_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.027309" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000003" ixy = "-0.000002" ixz = "0.000000"
+              iyx = "-0.000002" iyy = "0.000021" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000020" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_right_finger_joint" type="fixed">
+        <parent link="${tf_prefix}robotiq_85_right_knuckle_link"/>
+        <child link="${tf_prefix}robotiq_85_right_finger_link"/>
+        <origin xyz="-0.00408552455 -0.03148604435 0.0" rpy="0 0 0" />
+        <dynamics damping="1.0" friction="1.0"/>
+      </joint>
+
+      <!-- Robotiq: left_inner_knuckle -->
+      <link name="${tf_prefix}robotiq_85_left_inner_knuckle_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_inner_knuckle_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_inner_knuckle_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.029951" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000039" ixy = "0.000000" ixz = "0.000000"
+              iyx = "0.000000" iyy = "0.000005" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000035" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_left_inner_knuckle_joint" type="continuous">
+        <parent link="${tf_prefix}robotiq_85_base_link"/>
+        <child link="${tf_prefix}robotiq_85_left_inner_knuckle_link"/>
+        <axis xyz="0 0 1"/>
+        <origin xyz="0.06142 0.0127 0" rpy="${pi} 0.0 0.0" />
+        <limit lower="-0.05" upper="0.80285" velocity="0.5" effort="1000"/>
+        <dynamics damping="1.0" friction="1.0"/>
+      </joint>
+
+      <!-- Robotiq: right_inner_knuckle -->
+      <link name="${tf_prefix}robotiq_85_right_inner_knuckle_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_inner_knuckle_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_inner_knuckle_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.029951" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000039" ixy = "0.000000" ixz = "0.000000"
+              iyx = "0.000000" iyy = "0.000005" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000035" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_right_inner_knuckle_joint" type="continuous">
+        <parent link="${tf_prefix}robotiq_85_base_link"/>
+        <child link="${tf_prefix}robotiq_85_right_inner_knuckle_link"/>
+        <axis xyz="0 0 1"/>
+        <origin xyz="0.06142 -0.0127 0" rpy="0 0 0"/>
+        <limit lower="-0.05" upper="0.80285" velocity="0.5" effort="1000"/>
+        <dynamics damping="1.0" friction="1.0"/>
+      </joint>
+
+      <!-- Robotiq: left_finger_tip -->
+      <link name="${tf_prefix}robotiq_85_left_finger_tip_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_finger_tip_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_finger_tip_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.019555" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000002" ixy = "0.000000" ixz = "0.000000"
+              iyx = "0.000000" iyy = "0.000005" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000006" />
+        </inertial>
+      </link> 
+
+      <joint name="${tf_prefix}robotiq_85_left_finger_tip_joint" type="continuous">
+        <parent link="${tf_prefix}robotiq_85_left_inner_knuckle_link"/>
+        <child link="${tf_prefix}robotiq_85_left_finger_tip_link"/>
+        <axis xyz="0 0 1"/>
+        <origin xyz="0.04303959807 -0.03759940821 0.0" rpy="0.0 0.0 0.0"/>
+        <limit lower="-0.80285" upper="0.05" velocity="0.5" effort="1000"/>
+        <dynamics damping="1.0" friction="1.0"/>
+      </joint>
+
+      <!-- Robotiq: right_finger_tip -->
+      <link name="${tf_prefix}robotiq_85_right_finger_tip_link">
+        <visual>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/visual/robotiq_85_finger_tip_link.dae"/>
+          </geometry>
+        </visual>
+        <collision>
+          <geometry>
+            <mesh filename="file://$(find multi_robot_sim)/meshes/robotiq2f85/collision/robotiq_85_finger_tip_link.stl"/>
+          </geometry>
+        </collision>
+        <inertial>
+          <mass value="0.019555" />
+          <origin xyz="0.0 0.0 0.0" />
+          <inertia ixx = "0.000002" ixy = "0.000000" ixz = "0.000000"
+              iyx = "0.000000" iyy = "0.000005" iyz = "0.000000"
+              izx = "0.000000" izy = "0.000000" izz = "0.000006" />
+        </inertial>
+      </link>
+
+      <joint name="${tf_prefix}robotiq_85_right_finger_tip_joint" type="continuous">
+        <parent link="${tf_prefix}robotiq_85_right_inner_knuckle_link"/>
+        <child link="${tf_prefix}robotiq_85_right_finger_tip_link"/>
+        <axis xyz="0 0 1"/>
+        <origin rpy="0.0 0.0 0.0" xyz="0.04303959807 -0.03759940821  0.0"/>
+        <limit lower="-0.80285" upper="0.05" velocity="0.5" effort="1000"/>
+        <dynamics damping="1.0" friction="1.0"/>
+      </joint>
+
+      <!-- SMALL CUBE FOR GRIPPER PLUGIN -->
+
+      <link name="${tf_prefix}EE_robotiq_2f85">
+        <inertial>
+          <origin xyz="0 0 0" rpy="0 0 0" />
+          <mass value="0.00001" />
+          <inertia ixx="0.001" ixy="0.0" ixz="0.0" iyy="0.001" iyz="0.0" izz="0.001"/>
+        </inertial>
+        <visual>
+          <geometry>
+            <box size= "0.001 0.001 0.001" />
+          </geometry>
+        </visual>
+      </link>
+      
+
+    <joint name="${tf_prefix}EE_robotiq_2f85_joint" type="prismatic" >
+      <parent link="${tf_prefix}robotiq_85_base_link" />
+      <child link="${tf_prefix}EE_robotiq_2f85" />
+      <limit effort="10000" lower="0.0" upper="0.0" velocity="0.0"/>
+      <axis xyz="1 0 0" />
+      <origin xyz="0.128 0.0 0.0" rpy="0 0 0"/>
+    </joint>
+
+
+    <!-- ROS2 Control --> 
+    <!-- 1. ROS2_CONTROL tag name: -->
+    <!-- A. GAZEBO SIMULATION: -->
+
+      <!-- DiffDrive odometry & cmd_vel bridge -->
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+          <ros>
+            <namespace>${robot_name}</namespace>
+          </ros>
+        <robot_sim_type>gz_ros2_control/GazeboSimSystem</robot_sim_type>
+        <parameters>$(find multi_robot_sim)/config/${robot_name}_controllers.yaml</parameters>
+        <robot_param_node>${robot_name}_robot_state_publisher</robot_param_node>
+      </plugin>
+    </gazebo>
+
+    <!-- 3. Load ROS2_CONTROL: -->
+    <ros2_control name="${robot_name}_GazeboSimSystem" type="system">
+
+        <hardware>
+            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </hardware>
+
+      <!-- Mobile base joints -->
+      <joint name="${tf_prefix}front_left_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+          <param name="max">1</param>
+        </command_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="position"/>
+      </joint>
+
+      <joint name="${tf_prefix}front_right_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+        <param name="max">1</param>
+        </command_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="position"/>
+      </joint>
+
+      <joint name="${tf_prefix}rear_left_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+          <param name="max">1</param>
+        </command_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="position"/>
+      </joint>
+
+      <joint name="${tf_prefix}rear_right_wheel_joint">
+        <command_interface name="velocity">
+          <param name="min">-1</param>
+        <param name="max">1</param>
+        </command_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="position"/>
+      </joint>
+
+      <joint name="${tf_prefix}shoulder_pan_joint">
+        <command_interface name="position"/>
+          <!--param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface-->
+        <command_interface name="velocity"/>
+          <!--param name="min">-0.9</param>
+          <param name="max">0.9</param>
+        </command_interface-->
+        <state_interface name="position">
+            <param name="initial_value">${-pi/2}</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="${tf_prefix}shoulder_lift_joint">
+        <command_interface name="position"/>
+          <!--param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface-->
+        <command_interface name="velocity"/>
+          <!--param name="min">-2.0942</param>
+          <param name="max">2.0942</param>
+        </command_interface-->
+        <state_interface name="position">
+          <param name="initial_value">${-pi/2}</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="${tf_prefix}elbow_joint">
+        <command_interface name="position"/>
+          <!--param name="min">${-pi}</param>
+          <param name="max">${pi}</param>
+        </command_interface-->
+        <command_interface name="velocity"/>
+          <!--param name="min">-3.15</param>
+          <param name="max">3.15</param>
+        </command_interface-->
+        <state_interface name="position">
+          <param name="initial_value">${-pi/2}</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="${tf_prefix}wrist_1_joint">
+        <command_interface name="position"/>
+          <!--param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface-->
+        <command_interface name="velocity"/>
+          <!--param name="min">-3.1416</param>
+          <param name="max">3.1416</param>
+        </command_interface-->
+        <state_interface name="position">
+          <param name="initial_value">${-pi/2}</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="${tf_prefix}wrist_2_joint">
+        <command_interface name="position"/>
+          <!--param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface-->
+        <command_interface name="velocity"/>
+          <!--param name="min">-3.1416</param>
+          <param name="max">3.1416</param>
+        </command_interface-->
+        <state_interface name="position">
+          <param name="initial_value">${pi/2}</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+      <joint name="${tf_prefix}wrist_3_joint">
+        <command_interface name="position"/>
+          <!--param name="min">${-2*pi}</param>
+          <param name="max">${2*pi}</param>
+        </command_interface-->
+        <command_interface name="velocity"/>
+          <!--param name="min">-3.1416</param>
+          <param name="max">3.1416</param>
+        </command_interface-->
+        <state_interface name="position">
+          <param name="initial_value">0.0</param>
+        </state_interface>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <joint name="${tf_prefix}BASE_TF_joint">
+        <command_interface name="position"/>
+        <command_interface name="velocity"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <joint name="${tf_prefix}TCP_joint">
+        <command_interface name="position"/>
+        <command_interface name="velocity"/>
+        <state_interface name="position"/>
+        <state_interface name="velocity"/>
+        <state_interface name="effort"/>
+      </joint>
+
+      <!-- =================================== -->
+      <!-- ========== END-EFFECTORS ========== -->
+
+        <joint name="${tf_prefix}robotiq_85_left_knuckle_joint">
+          <command_interface name="position">
+            <param name="min">-0.05</param>
+            <param name="max">0.80285</param>
+          </command_interface>
+          <command_interface name="velocity">
+            <param name="min">0.5</param>
+            <param name="max">0.5</param>
+          </command_interface>
+          <state_interface name="position">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+
+        <joint name="${tf_prefix}robotiq_85_right_knuckle_joint">
+          <command_interface name="position">
+            <param name="min">-0.05</param>
+            <param name="max">0.80285</param>
+          </command_interface>
+          <command_interface name="velocity">
+            <param name="min">0.5</param>
+            <param name="max">0.5</param>
+          </command_interface>
+          <state_interface name="position">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+
+        <joint name="${tf_prefix}robotiq_85_left_inner_knuckle_joint">
+          <command_interface name="position">
+            <param name="min">-0.05</param>
+            <param name="max">0.80285</param>
+          </command_interface>
+          <command_interface name="velocity">
+            <param name="min">0.5</param>
+            <param name="max">0.5</param>
+          </command_interface>
+          <state_interface name="position">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+
+        <joint name="${tf_prefix}robotiq_85_right_inner_knuckle_joint">
+          <command_interface name="position">
+            <param name="min">-0.05</param>
+            <param name="max">0.80285</param>
+          </command_interface>
+          <command_interface name="velocity">
+            <param name="min">0.5</param>
+            <param name="max">0.5</param>
+          </command_interface>
+          <state_interface name="position">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+
+        <joint name="${tf_prefix}robotiq_85_left_finger_tip_joint">
+          <command_interface name="position">
+            <param name="min">-0.80285</param>
+            <param name="max">0.05</param>
+          </command_interface>
+          <command_interface name="velocity">
+            <param name="min">0.5</param>
+            <param name="max">0.5</param>
+          </command_interface>
+          <state_interface name="position">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+
+        <joint name="${tf_prefix}robotiq_85_right_finger_tip_joint">
+          <command_interface name="position">
+            <param name="min">-0.80285</param>
+            <param name="max">0.05</param>
+          </command_interface>
+          <command_interface name="velocity">
+            <param name="min">0.5</param>
+            <param name="max">0.5</param>
+          </command_interface>
+          <state_interface name="position">
+            <param name="initial_value">0.0</param>
+          </state_interface>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+
+        <joint name="${tf_prefix}EE_robotiq_2f85_joint">
+          <command_interface name="position"/>
+          <command_interface name="velocity"/>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+          <state_interface name="effort"/>
+        </joint>
+      <!-- ========== END-EFFECTORS ========== -->
+    </ros2_control>
+
+        <gazebo reference="${tf_prefix}shoulder_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}upper_arm_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}forearm_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}wrist_1_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}wrist_3_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}wrist_2_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+
+      <!-- =================================== -->
+      <!-- ========== END-EFFECTORS ========== -->
+
+        <gazebo reference="${tf_prefix}robotiq_85_base_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_left_knuckle_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_right_knuckle_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_left_finger_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_right_finger_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_left_inner_knuckle_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_right_inner_knuckle_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_left_finger_tip_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>
+        <gazebo reference="${tf_prefix}robotiq_85_right_finger_tip_link">
+          <selfCollide>false</selfCollide>
+        </gazebo>  
+
+
+      <gazebo reference="end_effector_frame_fixed_joint">
+        <preserveFixedJoint>true</preserveFixedJoint>
+        <!-- For compatibility with SDFormat < 4.4 -->
+        <disableFixedJointLumping>true</disableFixedJointLumping>
+      </gazebo>
+
+</robot>

@@ -1,0 +1,12 @@
+{'action': 'MoveJ', 'value': {'joint1': 90.0, 'joint2': -90.0, 'joint3': -90.0, 'joint4': -90.0, 'joint5': 90.0, 'joint6': 0.0}, 'speed': 0.25}
+{'action': 'MoveXYZW', 'value': {'x': -0.2, 'y': -0.4, 'z': 1.0, 'yaw': 90.0, 'pitch': 0.0, 'roll': 180.0}, 'speed': 0.25}
+{'action': 'MoveL', 'value': {'x': 0.00, 'y': 0.0, 'z': -0.12}, 'speed': 0.25}
+{'action': 'Attach', 'value': {'model1': 'ur10e', 'link1': 'EE_robotiq_2f85', 'model2': 'box', 'link2': 'box'}}
+{'action': 'MoveG', 'value': {'value': 0.4}, 'speed': 0.25}
+{'action': 'MoveL', 'value': {'x': 0.0, 'y': 0.0, 'z': 0.12}, 'speed': 0.25}
+{'action': 'MoveXYZW', 'value': {'x': -0.5, 'y': -0.1, 'z': 1.0, 'yaw': 90.0, 'pitch': 0.0, 'roll': 180.0}, 'speed': 0.25}
+{'action': 'MoveL', 'value': {'x': 0.0, 'y': 0.0, 'z': -0.12}, 'speed': 0.25}
+{'action': 'MoveG', 'value': {'value': 0.0}, 'speed': 0.25}
+{'action': 'Detach', 'value': {'model1': 'ur10e', 'link1': 'EE_robotiq_2f85', 'model2': 'box', 'link2': 'box'}}
+{'action': 'MoveL', 'value': {'x': 0.0, 'y':0.0, 'z': 0.12}, 'speed': 0.25}
+{'action': 'MoveJ', 'value': {'joint1': 90.0, 'joint2': -90.0, 'joint3': -90.0, 'joint4': -90.0, 'joint5': 90.0, 'joint6': 0.0}, 'speed': 0.25}

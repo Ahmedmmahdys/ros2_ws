@@ -1,0 +1,15 @@
+Rviz2_GzTowercrane
+
+# Sourcing the setup which exist in workspace
+source install/setup.bash
+
+###### launching by bringup launch file #####
+source install/setup.bash
+ros2 launch multi_robot_sim husky_gazebo_sim.launch.py
+
+
+################### UR10 command
+source install/setup.bash
+ros2 action send_goal -f /Move ros2srrc_data/action/Move "{action: 'MoveJ', movej: {joint1: -180.00, joint2: -90.00, joint3: -90.00, joint4: 0.0, joint5: 90.00, joint6: 90.00}, speed: 0.2}"
+ros2 action send_goal -f /Move ros2srrc_data/action/Move "{action: 'MoveXYZW', movexyzw: {x: 1.2, y: 0.0, z: 0.77, yaw: 90.00, pitch: 90.00, roll: 70.00}, speed: 0.19}"
+

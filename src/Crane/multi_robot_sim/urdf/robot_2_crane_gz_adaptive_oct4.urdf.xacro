@@ -1,0 +1,920 @@
+<?xml version="1.0" ?>
+<robot name="towercrane" xmlns:xacro="http://ros.org/wiki/xacro">
+  
+
+  <!-- Include materials -->
+  <xacro:include filename="$(find multi_robot_sim)/urdf/materials.xacro"/>
+
+  <!-- Include trolly depth_camera-->
+  <xacro:include filename="$(find multi_robot_sim)/urdf/tc_depth_cam.xacro"/>
+
+  <!-- Include trolly depth_camera-->
+  <!-- <xacro:include filename="$(find multi_robot_sim)/urdf/ur_depth_cam.xacro"/> -->
+
+  <!-- using a macro to calculate the inertia-->
+  <xacro:include filename="$(find multi_robot_sim)/urdf/inertial_calculate.xacro" />
+
+
+  <!-- Main agrs -->
+  <xacro:arg name="tf_prefix" default=""/>
+  <xacro:property name="tf_prefix" value="$(arg tf_prefix)"/>
+  <xacro:arg name="robot_name" default="robot_2"/>
+  <xacro:property name="robot_name" value="$(arg robot_name)"/>
+
+  <!-- Useful XACRO Variables (Properties) -->
+    <xacro:property name="PI_5" value="15.707963268" />
+    <xacro:property name="PI" value="3.14159265359" />
+    <xacro:property name="PI_2" value="1.570796327" />
+    <xacro:property name="PI_4" value="0.785398163" />
+    <xacro:property name="PI_18" value="0.174532925" />
+    <xacro:property name="D_160" value="2.792526803" />
+    <xacro:property name="D_200" value="3.490658504" />
+    <xacro:property name="effort" value="30000000000.0" />
+    <xacro:property name="velocity" value="30000.0" />
+
+    <!-- Useful Macros -->
+    <xacro:macro name="default_inertial" params="mass">
+        <inertial>
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+            <mass value="${mass}" />
+            <inertia ixx="0.5" ixy="0.0" ixz="0.0"
+                     iyy="0.5" iyz="0.0"
+                     izz="0.5" />
+        </inertial>
+    </xacro:macro>
+
+  <!-- World link -->
+  <link name="world"/>
+
+  <!-- START towercrane START towercrane-->
+  <!-- START towercrane START towercrane-->
+  <!-- START towercrane START towercrane-->
+
+ <!-- Virtuall Joint -->  
+    <joint name="virtual_joint" type="fixed">
+        <parent link="world"/>
+        <child link="ground_base_link"/>
+        <origin xyz="0 0 0.78" rpy="0 0 3.14159265359"/>
+    </joint> 
+    
+    <link name="ground_base_link">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="red"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_ground_base.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 1.12" rpy="0 0 0"/>
+            <geometry>
+                <box size="4.8 4.8 3.5"/> 
+                <!-- <mesh filename="package://towercrane_description/meshes/towercrane_ground_base.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision>
+    </link>
+ 
+    <joint name="body_segment_joint_01" type="fixed">
+        <parent link="ground_base_link"/>
+        <child link="body_segment_link_01"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_01">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <!-- <mesh filename="package://towercrane_description/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="body_segment_joint_02" type="fixed">
+        <parent link="body_segment_link_01"/>
+        <child link="body_segment_link_02"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_02">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <!-- <mesh filename="package://towercrane_description/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision>
+    </link>
+
+
+    <joint name="body_segment_joint_03" type="fixed">
+        <parent link="body_segment_link_02"/>
+        <child link="body_segment_link_03"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_03">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <!-- <mesh filename="package://towercrane_description/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="body_segment_joint_04" type="fixed">
+        <parent link="body_segment_link_03"/>
+        <child link="body_segment_link_04"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_04">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <!-- <mesh filename="package://towercrane_description/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="body_segment_joint_05" type="fixed">
+        <parent link="body_segment_link_04"/>
+        <child link="body_segment_link_05"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_05">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <!-- <mesh filename="package://towercrane_description/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="body_segment_joint_06" type="fixed">
+        <parent link="body_segment_link_05"/>
+        <child link="body_segment_link_06"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_06">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <!-- <mesh filename="package://towercrane_description/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision>
+    </link>
+
+    <joint name="body_segment_joint_07" type="fixed">
+        <parent link="body_segment_link_06"/>
+        <child link="body_segment_link_07"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_07">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </collision> -->
+    </link>
+
+    <joint name="body_segment_joint_08" type="fixed">
+        <parent link="body_segment_link_07"/>
+        <child link="body_segment_link_08"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="body_segment_link_08">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 0" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <mesh filename="package://towercrane_description/meshes/towercrane_body_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </collision> -->
+    </link>
+
+    <joint name="body_climbing_segment_joint_09" type="fixed">
+        <parent link="body_segment_link_08"/>
+        <child link="body_climbing_segment_link_09"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/> 
+
+    </joint> 
+    <link name="body_climbing_segment_link_09">
+        <xacro:default_inertial mass="1000.0"/>
+        <visual>
+            <origin xyz="-1.9643 -1.8635 -24" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/tower_crane_climbing_segment.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 -2.5" rpy="0 0 0"/>
+            <geometry>
+                <box size="5 5 6.5"/> 
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/tower_crane_climbing_segment.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link> 
+
+    <joint name="joint_1" type="revolute">
+        <parent link="body_climbing_segment_link_09"/>
+        <child link="cabin_segment_link_10"/>
+        <axis xyz="0 0 1"/>
+        <origin xyz="0 0 1.7" rpy="0 0 0"/>
+        <limit effort="2000" lower="-${PI}" upper="${PI}" velocity="${velocity}"/>
+    </joint> 
+    <link name="cabin_segment_link_10">
+        <xacro:default_inertial mass="10.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 -6.5" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_cabin_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="0 0 1.4" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 2.9"/> 
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_cabin_segment.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </collision> -->
+    </link>
+
+    <joint name="apex_joint_11" type="fixed">
+        <parent link="cabin_segment_link_10"/>
+        <child link="apex_link_11"/>
+        <origin xyz="0 0 3" rpy="0 0 0"/>
+    </joint> 
+    <link name="apex_link_11">
+        <xacro:default_inertial mass="10.0"/>
+        <visual>
+            <origin xyz="-0.8 -0.8 -9.3" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/apex.STL" scale="0.01 0.01 0.01"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 3.5" rpy="0 0 0"/>
+            <geometry>
+                <box size="2 2 7.0"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/apex.STL" scale="0.01 0.01 0.01"/> -->
+            </geometry>
+        </collision> 
+    </link> 
+    <joint name="weight_segment_joint_12" type="fixed">
+        <parent link="cabin_segment_link_10"/>
+        <child link="weight_segment_link_12"/>
+        <origin xyz="0 0 2.7" rpy="0 0 0"/>
+    </joint> 
+    <link name="weight_segment_link_12">
+        <inertial>
+            <!-- mass -->
+            <mass value="500"/>
+            <!-- optional origin block, if provided -->
+            <origin rpy="0 0 0" xyz="8 0 0"/>
+            <!-- inertia about center of mass for a box:
+                Ixx = 1/12 m (y² + z²)
+                Iyy = 1/12 m (x² + z²)
+                Izz = 1/12 m (x² + y²)
+            -->
+            <inertia ixx="517.0833333333333" ixy="0.0" ixz="0.0" iyy="9725.416666666666" iyz="0.0" izz="9541.666666666666"/>
+        </inertial>
+        <visual>
+            <origin xyz="-0.8 -1.325 -33" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/weight_segment.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="9 0 0" rpy="0 0 0"/>
+            <geometry>
+                <box size="15 2 2.9"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/weight_segment.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>
+
+    <joint name="crane_jib_base_joint_13" type="fixed">
+        <parent link="cabin_segment_link_10"/>
+        <child link="crane_jib_base_link_13"/>
+        <origin xyz="0 0 2.7" rpy="0 0 ${PI}"/>
+    </joint> 
+    <link name="crane_jib_base_link_13">
+        <inertial>
+            <!-- mass -->
+            <mass value="100"/>
+            <!-- optional origin block, if provided -->
+            <origin rpy="0 0 0" xyz="5 0 0"/>
+            <!-- inertia about center of mass for a box:
+                Ixx = 1/12 m (y² + z²)
+                Iyy = 1/12 m (x² + z²)
+                Izz = 1/12 m (x² + y²)
+            -->
+            <inertia ixx="40.08333333333333" ixy="0.0" ixz="0.0" iyy="552.0833333333333" iyz="0.0" izz="554.6666666666666"/>
+            </inertial>
+        <visual>
+            <origin xyz="-0.8 -0.825 -33" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_base.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="20 0 0.6" rpy="0 0 0"/>
+            <geometry>
+                <box size="37 1.6 1.5"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_base.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>  
+    <joint name="crane_jib_main_joint_14" type="fixed">
+        <parent link="crane_jib_base_link_13"/>
+        <child link="crane_jib_main_link_14"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint> 
+    <link name="crane_jib_main_link_14">
+        <inertial>
+            <!-- mass -->
+            <mass value="100"/>
+            <!-- optional origin block, if provided -->
+            <origin rpy="0 0 0" xyz="5 0 0"/>
+            <!-- inertia about center of mass for a box:
+                Ixx = 1/12 m (y² + z²)
+                Iyy = 1/12 m (x² + z²)
+                Izz = 1/12 m (x² + y²)
+            -->
+            <inertia ixx="40.08333333333333" ixy="0.0" ixz="0.0" iyy="552.0833333333333" iyz="0.0" izz="554.6666666666666"/>
+        </inertial>        
+        <visual>
+            <origin xyz="6.515 -0.8 -33" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_main.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="6.515 -0.8 -33" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="package://towercrane_description/meshes/crane_jib_main.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </collision>  -->
+    </link>
+
+    <joint name="crane_jib_main_joint_15" type="fixed">
+        <parent link="crane_jib_main_link_14"/>
+        <child link="crane_jib_main_link_15"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint> 
+    <link name="crane_jib_main_link_15">
+        <inertial>
+            <!-- mass -->
+            <mass value="100"/>
+            <!-- optional origin block, if provided -->
+            <origin rpy="0 0 0" xyz="5 0 0"/>
+            <!-- inertia about center of mass for a box:
+                Ixx = 1/12 m (y² + z²)
+                Iyy = 1/12 m (x² + z²)
+                Izz = 1/12 m (x² + y²)
+            -->
+            <inertia ixx="40.08333333333333" ixy="0.0" ixz="0.0" iyy="552.0833333333333" iyz="0.0" izz="554.6666666666666"/>
+        </inertial> 
+        <visual>
+            <origin xyz="13.83 -0.8 -33" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_main.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="13.83 -0.8 -33" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_main.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </collision> -->
+    </link> 
+
+    <joint name="crane_jib_main_joint_16" type="fixed">
+        <parent link="crane_jib_main_link_15"/>
+        <child link="crane_jib_main_link_16"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint> 
+    <link name="crane_jib_main_link_16">
+        <inertial>
+            <!-- mass -->
+            <mass value="100"/>
+            <!-- optional origin block, if provided -->
+            <origin rpy="0 0 0" xyz="5 0 0"/>
+            <!-- inertia about center of mass for a box:
+                Ixx = 1/12 m (y² + z²)
+                Iyy = 1/12 m (x² + z²)
+                Izz = 1/12 m (x² + y²)
+            -->
+            <inertia ixx="40.08333333333333" ixy="0.0" ixz="0.0" iyy="552.0833333333333" iyz="0.0" izz="554.6666666666666"/>
+        </inertial> 
+        <visual>
+            <origin xyz="21.145 -0.8 -33" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_main.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="20 0 0.6" rpy="0 0 0"/>
+            <geometry>
+                <box size="37 1.6 1.5"/>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_main.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </collision>  -->
+    </link> 
+
+    <joint name="crane_jib_last_joint_17" type="fixed">
+        <parent link="crane_jib_main_link_16"/>
+        <child link="crane_jib_last_link_17"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint> 
+    <link name="crane_jib_last_link_17">
+        <inertial>
+            <!-- mass -->
+            <mass value="100"/>
+            <!-- optional origin block, if provided -->
+            <origin rpy="0 0 0" xyz="5 0 0"/>
+            <!-- inertia about center of mass for a box:
+                Ixx = 1/12 m (y² + z²)
+                Iyy = 1/12 m (x² + z²)
+                Izz = 1/12 m (x² + y²)
+            -->
+            <inertia ixx="40.08333333333333" ixy="0.0" ixz="0.0" iyy="552.0833333333333" iyz="0.0" izz="554.6666666666666"/>
+        </inertial> 
+        <visual>
+            <origin xyz="28.46 -0.825 -33" rpy="0 0 0" />
+            <material name="yellow"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_last.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="28.46 -0.825 -33" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/crane_jib_last.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </collision> -->
+    </link> 
+
+    <joint name="joint_2" type="prismatic">
+        <parent link="crane_jib_base_link_13"/>
+        <child link="trolley_link_18"/>
+        <origin xyz="6 0 0" rpy="0 0 0"/>
+        <axis xyz="1 0 0"/>
+        <limit lower= "0"  upper="30" 
+        effort="${effort}" velocity="${velocity}"/>
+    </joint> 
+    <link name="trolley_link_18">
+        <xacro:default_inertial mass="5.0"/>
+        <visual>
+            <origin xyz="-2.275 -1.405 -33" rpy="0 0 0" />
+            <material name="red"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/trolley_base.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="-2.275 -1.405 -33" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/trolley_base.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </collision> -->
+    </link>
+
+
+    <joint name="joint_an_1" type="revolute">
+        <parent link="trolley_link_18"/>
+        <child link="swing_link_19"/>
+        <origin xyz="0 0 -0.54" rpy="${PI_2} 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower="-${PI_4}" upper="${PI_4}" 
+        effort="${effort}" velocity="${velocity}"/>
+        <dynamics damping="15" friction="0.99"/>
+    </joint> 
+    <link name="swing_link_19">
+        <xacro:default_inertial mass="5.0"/>
+        <visual>
+            <origin xyz="-0.09 -0.25 -0.05" rpy="0 0 0" />
+            <material name="green"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/swing.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <!-- <collision>
+            <origin xyz="-0.09 -0.25 -0.05" rpy="0 0 0"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/swing.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </collision>  -->
+    </link> 
+
+
+    <joint name="joint_an_2" type="revolute">
+        <parent link="swing_link_19"/>
+        <child link="rod_01_link_20"/>
+        <origin xyz="0 -0.2 0" rpy="${PI_2} 0 0"/>
+        <axis xyz="1 0 0"/>
+        <limit effort="${effort}" lower="-${PI_4}" upper="${PI_4}" velocity="${velocity}"/>
+        <dynamics damping="15" friction="0.99"/>
+    </joint> 
+    <link name="rod_01_link_20">
+        <xacro:object_inertial width="0.2" length="0.2" height="5" mass="1">
+          <origin xyz="0 0 2.5" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+            <origin xyz="-0.05 -0.05 -0.05" rpy="0 0 0" />
+            <material name="grey"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/rod_01.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 2.5" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="4.8"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/rod_01.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>
+    
+
+    <joint name="joint_3" type="prismatic">
+        <parent link="rod_01_link_20"/>
+        <child link="rod_02_link_21"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower= "0"  upper="5" 
+        effort="${effort}" velocity="${velocity}"/>
+    </joint> 
+    <link name="rod_02_link_21">
+        <xacro:object_inertial width="0.2" length="0.2" height="5" mass="1">
+          <origin xyz="0 0 2.5" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+            <origin xyz="-0.05 -0.05 -0.05" rpy="0 0 0" />
+            <material name="grey"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 2.5" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="4.8"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>
+
+
+    <joint name="joint_4" type="prismatic">
+        <parent link="rod_02_link_21"/>
+        <child link="rod_03_link_22"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower= "0"  upper="5" 
+        effort="${effort}" velocity="${velocity}"/>
+
+    </joint> 
+    <link name="rod_03_link_22">
+        <xacro:object_inertial width="0.2" length="0.2" height="5" mass="1">
+          <origin xyz="0 0 2.5" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+            <origin xyz="-0.05 -0.05 -0.05" rpy="0 0 0" />
+            <material name="grey"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 2.5" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="4.8"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>
+
+
+    <joint name="joint_5" type="prismatic">
+        <parent link="rod_03_link_22"/>
+        <child link="rod_04_link_23"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower= "0"  upper="5" 
+        effort="${effort}" velocity="${velocity}"/>
+    </joint> 
+    <link name="rod_04_link_23">
+        <xacro:object_inertial width="0.2" length="0.2" height="5" mass="1">
+          <origin xyz="0 0 2.5" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+            <origin xyz="-0.05 -0.05 -0.05" rpy="0 0 0" />
+            <material name="grey"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 2.5" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="4.8"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>
+
+    <joint name="joint_6" type="prismatic">
+        <parent link="rod_04_link_23"/>
+        <child link="rod_05_link_24"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower= "0"  upper="5" 
+        effort="${effort}" velocity="${velocity}"/>
+    </joint> 
+    <link name="rod_05_link_24">
+        <xacro:object_inertial width="0.2" length="0.2" height="5" mass="1">
+          <origin xyz="0 0 2.5" rpy="0 0 0" />
+        </xacro:object_inertial>
+        <visual>
+            <origin xyz="-0.05 -0.05 -0.05" rpy="0 0 0" />
+            <material name="grey"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 2.5" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="4.8"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>
+
+    <joint name="joint_7" type="prismatic">
+        <parent link="rod_05_link_24"/>
+        <child link="rod_06_link_25"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <axis xyz="0 0 1"/>
+        <limit lower= "0"  upper="5" 
+        effort="${effort}" velocity="${velocity}"/>
+    </joint> 
+    <link name="rod_06_link_25">
+        <xacro:object_inertial width="0.2" length="0.2" height="5" mass="1">
+          <origin xyz="0 0 2.5" rpy="0 0 0" />
+        </xacro:object_inertial>        
+        <visual>
+            <origin xyz="-0.05 -0.05 -0.05" rpy="0 0 0" />
+            <material name="grey"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+        <collision>
+            <origin xyz="0 0 2.5" rpy="0 0 0"/>
+            <geometry>
+                <cylinder radius="0.1" length="4.8"/>
+                <!-- <mesh filename="file://$(find multi_robot_sim)/meshes/rod_02.STL" scale="0.001 0.001 0.001"/> -->
+            </geometry>
+        </collision> 
+    </link>
+
+    <joint name="joint_8" type="fixed">
+        <parent link="rod_06_link_25"/>
+        <child link="hook_link_26"/>
+        <origin xyz="0 0 5" rpy="0 0 0"/>
+    </joint> 
+    <link name="hook_link_26">
+      <xacro:object_inertial width="0.4" length="0.4" height="1" mass="0.5">
+        <origin xyz="0 0 0.5" rpy="0 0 0" />
+      </xacro:object_inertial>
+        <visual>
+            <origin xyz="-2.275 0.798 25.0" rpy="${PI} 0 0" />
+            <material name="red"/>
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/hook_final.STL" scale="0.001 0.001 0.001"/>
+            </geometry>
+        </visual>
+    </link>
+
+
+    <joint name="joint_9" type="fixed">
+        <parent link="hook_link_26"/>
+        <child link="formwork"/>
+        <origin xyz="0 0 1.25" rpy="3.1413 0 0"/>
+    </joint> 
+    <link name="formwork">
+        <inertial>
+            <mass value="50"/>
+            <origin rpy="0 0 0" xyz="0 0 -1.4"/>
+            <!-- inertia about center of mass for a box:
+                Ixx = 1/12 m (y² + z²)
+                Iyy = 1/12 m (x² + z²)
+                Izz = 1/12 m (x² + y²)
+            -->
+            <inertia ixx="16.70833333333333" ixy="0.0" ixz="0.0" iyy="19.333333333333332" iyz="0.0" izz="2.7083333333333335"/>
+        </inertial>
+        <visual>
+        <material name="yellow">
+                <color rgba="1 1 0 1"/>
+        </material>
+        <origin xyz="-0.63 -1.985 -2.65" rpy="0 0 0" />
+            <geometry>
+                <mesh filename="file://$(find multi_robot_sim)/meshes/formwork_03.STL" scale="0.00035 0.00035 0.0007"/>
+            </geometry>
+        </visual>
+        <collision>
+        <origin xyz="0 -0.04 -1.485" rpy="0 0 0" />
+            <geometry>
+                <box size= "0.8 0.1 2.1" />
+            </geometry>
+        </collision>
+    </link>
+  <!-- END towercrane END towercrane END towercrane-->
+  <!-- END towercrane END towercrane END towercrane-->
+  <!-- END towercrane END towercrane END towercrane-->
+
+    <!-- ROS2 Control --> 
+    <!-- 1. ROS2_CONTROL tag name: -->
+    <!-- A. GAZEBO SIMULATION: -->
+
+      <!-- DiffDrive odometry & cmd_vel bridge -->
+    <gazebo>
+      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+          <ros>
+            <namespace>${robot_name}</namespace>
+          </ros>
+        <robot_sim_type>gz_ros2_control/GazeboSimSystem</robot_sim_type>
+        <parameters>$(find multi_robot_sim)/config/${robot_name}_controllers.yaml</parameters>
+        <robot_param_node>${robot_name}_robot_state_publisher</robot_param_node>
+      </plugin>
+    </gazebo>
+
+    <!-- 3. Load ROS2_CONTROL: -->
+    <ros2_control name="${robot_name}_GazeboSimSystem" type="system">
+        <hardware>
+            <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </hardware>
+
+<!-- ========== START-Towercrane ========== -->
+        <joint name="joint_1">
+            <command_interface name="position">
+                <param name="min">-${PI_2}</param>
+                <param name="max">${PI_2}</param>
+            </command_interface>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="joint_2">
+            <command_interface name="position">
+                <param name="min">0</param>
+                <param name="max">30</param>
+            </command_interface>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="joint_3">
+            <command_interface name="position">
+                <param name="min">0</param>
+                <param name="max">5</param>
+            </command_interface>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="joint_4">
+            <command_interface name="position">
+                <param name="min">0</param>
+                <param name="max">5</param>
+            </command_interface>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="joint_5">
+            <command_interface name="position">
+                <param name="min">0</param>
+                <param name="max">5</param>
+            </command_interface>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="joint_6">
+            <command_interface name="position">
+                <param name="min">0</param>
+                <param name="max">5</param>
+            </command_interface>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="joint_7">
+            <command_interface name="position">
+                <param name="min">0</param>
+                <param name="max">5</param>
+            </command_interface>
+            <command_interface name="velocity"/>
+            <state_interface name="position"/>
+            <state_interface name="velocity"/>
+        </joint>
+
+        <joint name="joint_an_1">
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+        </joint>
+
+        <joint name="joint_an_2">
+            <state_interface name="velocity"/>
+            <state_interface name="position"/>
+        </joint>
+
+        <!-- ========== END-Towercrane ========== -->
+
+    </ros2_control>
+</robot>

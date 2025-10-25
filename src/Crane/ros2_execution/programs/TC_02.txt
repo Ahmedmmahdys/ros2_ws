@@ -1,0 +1,16 @@
+{'action': 'MoveXYZ', 'value': {'positionx': -28.0, 'positiony': 0.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -28.0, 'positiony': 0.0, 'positionz': 5.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -28.0, 'positiony': 0.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': 0.0, 'positiony': -7.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': 0.0, 'positiony': -7.0, 'positionz': 13.95}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -21.0, 'positiony': 0.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -21.0, 'positiony': 0.0, 'positionz': 5.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -21.0, 'positiony': 0.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': 0.0, 'positiony': -14.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': 0.0, 'positiony': -14.0, 'positionz': 13.95}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -14.0, 'positiony': 0.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -14.0, 'positiony': 0.0, 'positionz': 5.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': -14.0, 'positiony': 0.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': 0.0, 'positiony': -30.0, 'positionz': 24.25}, 'speed': 0.1}
+{'action': 'MoveXYZ', 'value': {'positionx': 0.0, 'positiony': -30.0, 'positionz': 13.95}, 'speed': 0.1}
+
