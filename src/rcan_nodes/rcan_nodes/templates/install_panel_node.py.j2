@@ -1,32 +1,122 @@
 import json
+from typing import Optional, Sequence, Tuple
+
 import rclpy
+from rclpy.action import ActionClient
 from rclpy.node import Node
 from std_msgs.msg import String
 
+from ros2_data.action import MoveXYZ
+
+
+SAFE_HEIGHT_OFFSET = 2.0
+MOVE_SPEED = 0.15
+
+
+class MoveXYZClient:
+    """Helper around the MoveXYZ action client."""
+
+    def __init__(self, node: Node) -> None:
+        self._node = node
+        self._client = ActionClient(node, MoveXYZ, "MoveXYZ")
+
+    def wait(self, timeout: float = 10.0) -> None:
+        """Wait for the MoveXYZ action server to be available."""
+
+        if not self._client.wait_for_server(timeout_sec=timeout):
+            raise RuntimeError("MoveXYZ action server not available")
+
+    def send(self, position: Sequence[float], speed: float) -> str:
+        """Send a MoveXYZ goal and wait for completion."""
+
+        goal = MoveXYZ.Goal()
+        goal.positionx = float(position[0])
+        goal.positiony = float(position[1])
+        goal.positionz = float(position[2])
+        goal.speed = float(speed)
+
+        send_future = self._client.send_goal_async(goal)
+        rclpy.spin_until_future_complete(self._node, send_future)
+        goal_handle = send_future.result()
+        if goal_handle is None or not goal_handle.accepted:
+            raise RuntimeError("MoveXYZ goal was rejected")
+
+        result_future = goal_handle.get_result_async()
+        rclpy.spin_until_future_complete(self._node, result_future)
+        goal_result = result_future.result()
+        if goal_result is None or goal_result.result is None:
+            raise RuntimeError("MoveXYZ goal finished without result")
+
+        result_text = str(goal_result.result.result)
+        if result_text != "MoveXYZ:SUCCESS":
+            raise RuntimeError(f"MoveXYZ goal returned '{result_text}'")
+        return result_text
+
 
 class InstallPanelNode(Node):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__('install_panel_{{ ifcguid }}')
         self.pub = self.create_publisher(String, '/rcan/state', 10)
         self.activity_id = '{{ activity_id }}'
         self.ifcguid = '{{ ifcguid }}'
-        self.hook = {{ hook_pose }}
-        self.target = {{ target_pose }}
+        self.hook: Tuple[float, float, float] = {{ hook_pose }}
+        self.target: Tuple[float, float, float] = {{ target_pose }}
+        self._move_client = MoveXYZClient(self)
 
-    def run(self):
-        # TODO: call crane services here
+    def _safe_height(self) -> float:
+        return max(self.hook[2], self.target[2]) + SAFE_HEIGHT_OFFSET
+
+    def run(self) -> None:
+        status = "success"
+        error: Optional[str] = None
+
+        try:
+            self._move_client.wait()
+            safe_height = self._safe_height()
+            waypoints = [
+                (self.hook[0], self.hook[1], safe_height),
+                (self.hook[0], self.hook[1], self.hook[2]),
+                (self.hook[0], self.hook[1], safe_height),
+                (self.target[0], self.target[1], safe_height),
+                (self.target[0], self.target[1], self.target[2]),
+                (self.target[0], self.target[1], safe_height),
+            ]
+
+            for index, waypoint in enumerate(waypoints, start=1):
+                self.get_logger().info(
+                    "Executing crane move %d towards x=%.3f y=%.3f z=%.3f",
+                    index,
+                    waypoint[0],
+                    waypoint[1],
+                    waypoint[2],
+                )
+                self._move_client.send(waypoint, MOVE_SPEED)
+
+        except Exception as exc:  # pragma: no cover - depends on runtime ros action server
+            status = "failed"
+            error = str(exc)
+            self.get_logger().error("Panel installation failed: %s", exc)
+
         msg = String()
-        msg.data = json.dumps({"activity_id": self.activity_id,
-                               "ifcguid": self.ifcguid,
-                               "status": "success"})
+        payload = {
+            "activity_id": self.activity_id,
+            "ifcguid": self.ifcguid,
+            "status": status,
+        }
+        if error:
+            payload["error"] = error
+        msg.data = json.dumps(payload)
         self.pub.publish(msg)
 
 
-def main():
+def main() -> None:
     rclpy.init()
     node = InstallPanelNode()
-    node.run()
-    rclpy.shutdown()
+    try:
+        node.run()
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
 
 
 if __name__ == '__main__':

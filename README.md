@@ -62,6 +62,24 @@ resulting state change. Generated nodes appear under
 `src/rcan_nodes/rcan_nodes/generated/` and panel statuses are persisted back to
 Neo4j.
 
+### Crane action server
+
+The generated install nodes now command the crane through the
+`ros2_actions` MoveXYZ action provided in `src/Crane`. Launch the crane
+simulation and start the action server before dispatching installation
+requests so that the nodes can hand off motion goals:
+
+```bash
+# In a separate shell sourced with the workspace environment
+ros2 run ros2_actions moveXYZ_action
+```
+
+The RCAN nodes will drive the crane by sending a sequence of MoveXYZ goals:
+approach the panel hook from above, descend to the hook height, lift to a safe
+clearance, travel to the target location, and finally lower the panel into
+place. Failures from the action server are reported back through the existing
+`/rcan/state` channel and propagate to the RCAN state manager.
+
 To keep the orchestrator resident for long-running sessions you can launch the
 core service harness:
 
